@@ -18,7 +18,25 @@ bundle
 
 ## Usage
 
-TODO
+### `Enops::Heroku`
+
+Handy methods for managing a Heroku app:
+
+- Execute Heroku Toolbelt commands via the `cmd` method
+- Run commands on a Heroku dyno via the `run` method
+- Query the Heroku API via the `client` method
+- Convenience methods, e.g. `app_names`, `get_config_vars`
+
+##### Example usage
+
+```ruby
+require 'logger'
+require 'enops'
+
+logger = Logger.new(STDOUT)
+heroku = Enops::Heroku.new('username', '*******', logger)
+heroku.run('app-name', 'rake db:migrate')
+```
 
 ## Development
 
