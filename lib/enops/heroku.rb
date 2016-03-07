@@ -1,7 +1,6 @@
 require 'enops/utils'
 require 'fileutils'
 require 'heroics'
-require 'pty'
 require 'shellwords'
 
 module Enops
@@ -137,23 +136,9 @@ module Enops
       ENV['HEROKU_API_KEY'] = nil
     end
 
-    def execute(cmd)
+    def execute(cmd, &block)
       with_heroku_env do
-        PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
-          begin
-            loop do
-              line = r.readline
-              if block_given?
-                yield line
-              else
-                Enops.logger.debug line.chomp
-              end
-            end
-          rescue EOFError, Errno::EIO
-          end
-          status = PTY.check(pid)
-          raise "#{cmd.inspect} failed with exit status #{status.exitstatus}" unless status.success?
-        end
+        Enops::Utils.execute(cmd, &block)
       end
     end
   end

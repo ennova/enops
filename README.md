@@ -71,6 +71,36 @@ count: 4
 success!
 ```
 
+### `Enops::Utils.execute`
+
+Executes a terminal command. Raises an error if the command isn't successful.
+
+##### Example usage
+
+```ruby
+Enops::Utils.execute 'pwd'
+```
+
+Outputs:
+
+```text
+… DEBUG -- : /Users/ennova/enops
+```
+
+If you want to do something with the output, pass the method a block:
+
+```ruby
+Enops::Utils.execute 'pwd' do |line|
+  Enops.logger.info "You are here: #{line.chomp}"
+end
+```
+
+Outputs:
+
+```text
+… INFO -- : You are here: /Users/ennova/enops
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
