@@ -10,12 +10,10 @@ module Enops
 
     attr_reader :username
     attr_reader :password
-    attr_accessor :logger
 
-    def initialize(username, password, logger)
+    def initialize(username, password)
       @username = username
       @password = password
-      @logger = logger
 
       raise 'Missing Heroku credentials' if password.nil?
     end
@@ -77,7 +75,7 @@ module Enops
         if line.chomp.chomp =~ /\Aheroku-run-exit-status=(\d+)\z/
           exit_status = Integer($1)
         else
-          logger.debug line.chomp
+          Enops.logger.debug line.chomp
         end
       end
       raise "#{cmd.inspect} failed with exit status #{exit_status || '<unknown>'}" unless exit_status == 0
@@ -120,7 +118,7 @@ module Enops
       max_tries = 20
 
       Retryable.retryable(tries: max_tries, sleep: 15, on: Excon::Errors::Error) do |try_num|
-        logger.warn "Retrying #{caller_label} (try #{try_num+1} of #{max_tries})" if try_num > 0
+        Enops.logger.warn "Retrying #{caller_label} (try #{try_num+1} of #{max_tries})" if try_num > 0
         yield
       end
     end
@@ -144,7 +142,7 @@ module Enops
               if block_given?
                 yield line
               else
-                logger.debug line.chomp
+                Enops.logger.debug line.chomp
               end
             end
           rescue EOFError, Errno::EIO

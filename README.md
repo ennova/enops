@@ -33,8 +33,8 @@ Handy methods for managing a Heroku app:
 require 'logger'
 require 'enops'
 
-logger = Logger.new(STDOUT)
-heroku = Enops::Heroku.new('username', '*******', logger)
+Enops.logger = Logger.new(STDOUT)
+heroku = Enops::Heroku.new('username', '*******')
 heroku.run('app-name', 'rake db:migrate')
 ```
 
