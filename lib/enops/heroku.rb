@@ -1,7 +1,7 @@
+require 'enops/utils'
 require 'fileutils'
 require 'heroics'
 require 'pty'
-require 'retryable'
 require 'shellwords'
 
 module Enops
@@ -122,11 +122,7 @@ module Enops
     private
 
     def with_retry
-      caller_label = caller[0][/`([^']*)'$/, 1]
-      max_tries = 20
-
-      Retryable.retryable(tries: max_tries, sleep: 15, on: Excon::Errors::Error) do |try_num|
-        Enops.logger.warn "Retrying #{caller_label} (try #{try_num+1} of #{max_tries})" if try_num > 0
+      Enops::Utils.with_retry(tries: 20, sleep: 15, on: Excon::Errors::Error) do
         yield
       end
     end

@@ -1,4 +1,5 @@
 require 'enops/version'
+require 'enops/utils'
 require 'enops/heroku'
 
 module Enops
