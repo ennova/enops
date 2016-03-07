@@ -18,14 +18,22 @@ module Enops
       raise 'Missing Heroku credentials' if password.nil?
     end
 
+    def self.schema_filename=(filename)
+      @schema_filename = filename
+    end
+
+    def self.schema_filename
+      @schema_filename || 'tmp/schema.json'
+    end
+
     def self.schema
       @schema ||= begin
-        if File.exists?('tmp/schema.json')
-          body = File.read('tmp/schema.json')
+        if File.exists?(schema_filename)
+          body = File.read(schema_filename)
         else
           body = Excon.get('https://api.heroku.com/schema', headers: {'Accept' => HEROKU_ACCEPT}, expects: [200]).body
-          FileUtils.mkdir_p 'tmp'
-          File.write 'tmp/schema.json', body
+          FileUtils.mkdir_p File.dirname(schema_filename)
+          File.write schema_filename, body
         end
 
         schema = MultiJson.load(body)
