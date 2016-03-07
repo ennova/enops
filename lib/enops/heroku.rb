@@ -122,7 +122,7 @@ module Enops
     private
 
     def with_retry
-      Enops::Utils.with_retry(tries: 20, sleep: 15, on: Excon::Errors::Error) do
+      Enops::Utils.with_retry(caller_label: Enops::Utils.caller_label, tries: 20, sleep: 15, on: Excon::Errors::Error) do
         yield
       end
     end
