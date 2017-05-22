@@ -63,18 +63,7 @@ module Enops
     #
     # This wrapper adds support for detecting exit status codes from `heroku run`.
     def run(app_name, cmd)
-      exit_status = nil
-      execute "heroku run #{Shellwords.escape "(#{cmd}); echo heroku-run-exit-status=$?"} --app #{Shellwords.escape app_name}" do |line|
-        if exit_status
-          raise "Unexpected output after exit code: #{line.inspect}"
-        end
-        if line.chomp.chomp =~ /\Aheroku-run-exit-status=(\d+)\z/
-          exit_status = Integer($1)
-        else
-          Enops.logger.debug line.chomp
-        end
-      end
-      raise "#{cmd.inspect} failed with exit status #{exit_status || '<unknown>'}" unless exit_status == 0
+      cmd app_name, "run --exit-code #{Shellwords.escape cmd}"
     end
 
     def get_maintenance(app_name)
