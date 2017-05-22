@@ -48,7 +48,7 @@ module Enops
 
     def get_config_vars(app_name)
       with_retry do
-        client.config_var.info(app_name)
+        client.config_var.info_for_app(app_name)
       end
     end
 
