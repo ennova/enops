@@ -57,6 +57,21 @@ module Enops
       end
     end
 
+    def get_latest_release(app_name)
+      with_retry do
+        with_client_headers 'Range' => 'version ..; order=desc, max=1;' do
+          client.release.list(app_name).first
+        end
+      end
+    end
+
+    def get_commit_sha(app_name)
+      release = get_latest_release(app_name)
+      slug_id = release.fetch('slug').fetch('id')
+      slug = with_retry { client.slug.info(app_name, slug_id) }
+      slug.fetch('commit')
+    end
+
     # Executes any Heroku Toolbelt command
     #   `heroku $ARGS`
     def cmd(app_name, args)
