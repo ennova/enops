@@ -13,6 +13,7 @@ module Enops
     def initialize(username, password)
       @username = username
       @password = password
+      @default_client_headers ||= {'Accept' => HEROKU_ACCEPT}
 
       raise 'Missing Heroku credentials' if password.nil?
     end
@@ -36,7 +37,7 @@ module Enops
       url = "https://#{CGI.escape username}:#{CGI.escape password}@api.heroku.com/"
       @client ||= begin
         schema = Heroics::Schema.new(self.class.schema)
-        Heroics.client_from_schema schema, url, default_headers: {'Accept' => HEROKU_ACCEPT}
+        Heroics.client_from_schema schema, url, default_headers: @default_client_headers
       end
     end
 
