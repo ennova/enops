@@ -41,10 +41,14 @@ module Enops
       end
     end
 
-    def app_names
+    def apps
       with_retry do
-        client.app.list.map { |app| app['name'] }
+        client.app.list
       end
+    end
+
+    def app_names
+      apps.map { |app| app['name'] }
     end
 
     def get_config_vars(app_name)
