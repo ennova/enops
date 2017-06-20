@@ -72,6 +72,26 @@ module Enops
       slug.fetch('commit')
     end
 
+    def get_collaborators(app_name)
+      client.collaborator.list(app_name).map { |collaborator| collaborator.fetch('user').fetch('email') }
+    end
+
+    def add_collaborator(app_name, email)
+      client.collaborator.create(app_name, user: email)
+      true
+    rescue Excon::Errors::UnprocessableEntity => e
+      response = MultiJson.load(e.response.body)
+      raise unless response.fetch('message').include? 'already a collaborator'
+      false
+    end
+
+    def remove_collaborator(app_name, email)
+      client.collaborator.delete(app_name, email)
+      true
+    rescue Excon::Errors::NotFound
+      false
+    end
+
     # Executes any Heroku Toolbelt command
     #   `heroku $ARGS`
     def cmd(app_name, args)
