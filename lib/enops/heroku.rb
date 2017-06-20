@@ -105,6 +105,16 @@ module Enops
       end
     end
 
+    def with_client_headers(headers)
+      old_headers = @default_client_headers.dup
+      @default_client_headers.merge! headers
+
+      yield
+    ensure
+      @default_client_headers.clear
+      @default_client_headers.merge! old_headers
+    end
+
     def with_heroku_env
       cached_password = password
       Bundler.with_clean_env do
