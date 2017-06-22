@@ -67,9 +67,10 @@ module Enops
 
     def get_commit_sha(app_name)
       release = get_latest_release(app_name)
-      slug_id = release.fetch('slug').fetch('id')
-      slug = with_retry { client.slug.info(app_name, slug_id) }
-      slug.fetch('commit')
+      if slug = release.fetch('slug')
+        slug = with_retry { client.slug.info(app_name, slug.fetch('id')) }
+        slug.fetch('commit')
+      end
     end
 
     def get_collaborators(app_name)
