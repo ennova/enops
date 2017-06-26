@@ -57,6 +57,12 @@ module Enops
       end
     end
 
+    def set_config_vars(app_name, config_vars)
+      with_retry do
+        client.config_var.update app_name, config_vars
+      end
+    end
+
     def get_latest_release(app_name)
       with_retry do
         with_client_headers 'Range' => 'version ..; order=desc, max=1;' do
