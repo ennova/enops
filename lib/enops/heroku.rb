@@ -131,8 +131,7 @@ module Enops
       formation = with_retry do
         client.formation.list(app_name)
       end
-      formation = formation.select { |process| process['quantity'] > 0 }
-      Hash[formation.map { |process| process.values_at('type', 'quantity') }]
+      format_formation_response(formation)
     end
 
     def set_ps_scale(app_name, quantities)
@@ -173,6 +172,11 @@ module Enops
       with_heroku_env do
         Enops::Utils.execute(cmd, &block)
       end
+    end
+
+    def format_formation_response(formation)
+      formation = formation.select { |process| process['quantity'] > 0 }
+      Hash[formation.map { |process| process.values_at('type', 'quantity') }]
     end
   end
 end
