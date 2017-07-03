@@ -136,10 +136,8 @@ module Enops
     end
 
     def set_ps_scale(app_name, quantities)
-      quantities.each do |id, quantity|
-        with_retry do
-          client.formation.update(app_name, id, quantity: quantity)
-        end
+      with_retry do
+        client.formation.batch_update app_name, {updates: quantities.map { |type, quantity| {type: type, quantity: quantity} }}
       end
     end
 
