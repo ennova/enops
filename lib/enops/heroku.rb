@@ -135,9 +135,10 @@ module Enops
     end
 
     def set_ps_scale(app_name, quantities)
-      with_retry do
+      formation = with_retry do
         client.formation.batch_update app_name, {updates: quantities.map { |type, quantity| {type: type, quantity: quantity} }}
       end
+      format_formation_response(formation)
     end
 
     private
