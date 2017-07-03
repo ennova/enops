@@ -26,8 +26,8 @@ module Enops
       @schema ||= begin
         body = File.read(schema_filename)
         schema = MultiJson.load(body)
-        if schema['definitions'].keys == ['schemata']
-          schema['definitions'] = schema['definitions']['schemata']
+        if schema.fetch('definitions').keys == ['schemata']
+          schema['definitions'] = schema.fetch('definitions').fetch('schemata')
         end
         schema
       end
@@ -48,7 +48,7 @@ module Enops
     end
 
     def app_names
-      apps.map { |app| app['name'] }
+      apps.map { |app| app.fetch('name') }
     end
 
     def get_config_vars(app_name)
@@ -176,8 +176,8 @@ module Enops
     end
 
     def format_formation_response(formation)
-      formation = formation.select { |process| process['quantity'] > 0 }
-      Hash[formation.map { |process| process.values_at('type', 'quantity') }]
+      formation = formation.select { |process| process.fetch('quantity') > 0 }
+      Hash[formation.map { |process| [process.fetch('type'), process.fetch('quantity')] }]
     end
   end
 end
