@@ -162,6 +162,18 @@ module Enops
       api_get hostname: hostname, path: "/client/v11/databases/#{addon_id}"
     end
 
+    def postgresql_addon_detail_info(detail)
+      detail.fetch('info').map do |row|
+        key = row.fetch('name')
+        values = row.fetch('values')
+        if values.size > 1
+          raise KeyError, "key has more than one value: #{key}"
+        end
+
+        [key, values.first]
+      end.to_h
+    end
+
     private
 
     def with_retry
