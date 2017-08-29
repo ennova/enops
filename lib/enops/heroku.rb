@@ -150,14 +150,14 @@ module Enops
       end
     end
 
-    def postgresql_addon_attachment_production?(attachment)
-      plan = attachment.fetch('addon').fetch('plan').fetch('name').split(':')[1]
+    def postgresql_addon_production?(addon)
+      plan = addon.fetch('plan').fetch('name').split(':')[1]
       !%w[dev basic hobby-dev hobby-basic].include?(plan)
     end
 
-    def postgresql_addon_attachment_detail(attachment)
-      addon_id = attachment.fetch('addon').fetch('id')
-      hostname = postgresql_addon_attachment_production?(attachment) ? 'postgres-api.heroku.com' : 'postgres-starter-api.heroku.com'
+    def postgresql_addon_detail(addon)
+      addon_id = addon.fetch('id')
+      hostname = postgresql_addon_production?(addon) ? 'postgres-api.heroku.com' : 'postgres-starter-api.heroku.com'
 
       api_get hostname: hostname, path: "/client/v11/databases/#{addon_id}"
     end
