@@ -141,6 +141,27 @@ module Enops
       format_formation_response(formation)
     end
 
+    def postgresql_addon_attachments(app_name)
+      with_retry do
+        with_client_headers 'Accept-Inclusion' => 'addon:plan,config_vars' do
+          client.add_on_attachment.list_by_app(app_name)
+            .select { |result| result.fetch('addon').fetch('plan').fetch('name').start_with?('heroku-postgresql:') }
+        end
+      end
+    end
+
+    def postgresql_addon_attachment_production?(attachment)
+      plan = attachment.fetch('addon').fetch('plan').fetch('name').split(':')[1]
+      !%w[dev basic hobby-dev hobby-basic].include?(plan)
+    end
+
+    def postgresql_addon_attachment_detail(attachment)
+      addon_id = attachment.fetch('addon').fetch('id')
+      hostname = postgresql_addon_attachment_production?(attachment) ? 'postgres-api.heroku.com' : 'postgres-starter-api.heroku.com'
+
+      api_get hostname: hostname, path: "/client/v11/databases/#{addon_id}"
+    end
+
     private
 
     def with_retry
@@ -167,6 +188,22 @@ module Enops
       end
     ensure
       ENV['HEROKU_API_KEY'] = nil
+    end
+
+    def api_get(hostname:, path:)
+      connection = Excon.new(
+        'https://' + hostname,
+        username: heroku.username,
+        password: heroku.password,
+        headers: @default_client_headers,
+      )
+
+      response = connection.get(
+        path: path,
+        expects: [200],
+      )
+
+      MultiJson.load(response.body)
     end
 
     def execute(cmd, &block)
