@@ -150,6 +150,14 @@ module Enops
       end
     end
 
+    def postgresql_addon(addon_name)
+      addon = client.add_on.info(addon_name)
+      unless addon.fetch('plan').fetch('name').start_with?('heroku-postgresql:')
+        raise 'not a PostgreSQL addon'
+      end
+      addon
+    end
+
     def postgresql_addon_production?(addon)
       plan = addon.fetch('plan').fetch('name').split(':')[1]
       !%w[dev basic hobby-dev hobby-basic].include?(plan)
