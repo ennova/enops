@@ -178,7 +178,7 @@ module Enops
       addon_id = addon.fetch('id')
       hostname = postgresql_addon_production?(addon) ? 'postgres-api.heroku.com' : 'postgres-starter-api.heroku.com'
 
-      api_get hostname: hostname, path: "/client/v11/databases/#{addon_id}"
+      api_get hostname, "/client/v11/databases/#{addon_id}"
     end
 
     def postgresql_addon_detail_info(detail)
@@ -222,7 +222,7 @@ module Enops
       ENV['HEROKU_API_KEY'] = nil
     end
 
-    def api_get(hostname:, path:)
+    def api_get(hostname, path)
       connection = Excon.new(
         'https://' + hostname,
         username: heroku.username,
