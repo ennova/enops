@@ -6,6 +6,7 @@ require 'shellwords'
 module Enops
   class Heroku
     HEROKU_ACCEPT = 'application/vnd.heroku+json; version=3'
+    HEROKU_POSTGRES_HOBBY_PLANS = %w[dev basic hobby-dev hobby-basic]
 
     attr_reader :username
     attr_reader :password
@@ -160,7 +161,7 @@ module Enops
 
     def postgresql_addon_production?(addon)
       plan = addon.fetch('plan').fetch('name').split(':')[1]
-      !%w[dev basic hobby-dev hobby-basic].include?(plan)
+      !HEROKU_POSTGRES_HOBBY_PLANS.include?(plan)
     end
 
     def postgresql_addon_detail(addon)
