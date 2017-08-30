@@ -1,5 +1,6 @@
 require 'enops/utils'
 require 'fileutils'
+require 'netrc'
 require 'heroics'
 require 'shellwords'
 
@@ -10,6 +11,15 @@ module Enops
 
     attr_reader :username
     attr_reader :password
+
+    def self.default
+      if ENV['HEROKU_API_KEY']
+        new('', ENV['HEROKU_API_KEY'])
+      else
+        username, password = Netrc.read['api.heroku.com']
+        new(username, password)
+      end
+    end
 
     def initialize(username, password)
       @username = username
