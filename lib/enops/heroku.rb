@@ -205,6 +205,7 @@ module Enops
       cached_password = password
       Bundler.with_clean_env do
         ENV['HEROKU_API_KEY'] = cached_password
+        ENV['CI'] = 'true'
         yield
       end
     ensure
