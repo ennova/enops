@@ -193,6 +193,28 @@ module Enops
       end.to_h
     end
 
+    def postgresql_backups_capture(app_name)
+      output = cmd app_name, 'pg:backups:capture'
+
+      unless output =~ /^Backing up [A-Z]+ to (b\d+)\.\.\. done\r?$/
+        raise "Could not detect backup ID"
+      end
+      backup_id = $1
+
+      backup_id
+    end
+
+    def postgresql_backups_url(app_name, backup_id)
+      output = cmd app_name, "pg:backups:url #{Shellwords.escape backup_id}"
+
+      url = output.lines.first.strip
+      unless url.start_with? 'https://'
+        raise "Unexpected backup URL: #{url.inspect}"
+      end
+
+      url
+    end
+
     private
 
     def with_retry
