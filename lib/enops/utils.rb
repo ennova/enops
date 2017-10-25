@@ -21,10 +21,13 @@ module Enops
     end
 
     def execute(cmd)
+      output_io = StringIO.new
+
       PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
         begin
           loop do
             line = r.readline
+            output_io << line
             if block_given?
               yield line
             else
@@ -36,6 +39,8 @@ module Enops
         status = PTY.check(pid)
         raise "#{cmd.inspect} failed with exit status #{status.exitstatus}" unless status.success?
       end
+
+      output_io.string
     end
   end
 end
