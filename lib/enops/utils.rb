@@ -36,8 +36,8 @@ module Enops
           end
         rescue EOFError, Errno::EIO
         end
-        status = PTY.check(pid)
-        raise "#{cmd.inspect} failed with exit status #{status.exitstatus}" unless status.success?
+        Process.wait(pid)
+        raise "#{cmd.inspect} failed with exit status #{$?.exitstatus}" unless $?.success?
       end
 
       output_io.string
