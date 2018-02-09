@@ -20,27 +20,35 @@ module Enops
       end
     end
 
-    def execute(cmd)
+    def execute(cmd, &block)
       output_io = StringIO.new
 
-      PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
-        begin
-          loop do
-            line = r.readline
-            output_io << line
-            if block_given?
-              yield line
-            else
-              Enops.logger.debug line.chomp
-            end
-          end
-        rescue EOFError, Errno::EIO
-        end
+      status = PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
+        log_io_lines(r, output_io, &block)
         Process.wait(pid)
-        raise "#{cmd.inspect} failed with exit status #{$?.exitstatus}" unless $?.success?
+        $?
       end
 
+      raise "#{cmd.inspect} failed with exit status #{status.exitstatus}" unless status.success?
+
       output_io.string
+    end
+
+    private
+
+    def log_io_lines(src, dst)
+      begin
+        loop do
+          line = src.readline
+          dst << line
+          if block_given?
+            yield line
+          else
+            Enops.logger.debug line.chomp
+          end
+        end
+      rescue EOFError, Errno::EIO
+      end
     end
   end
 end
