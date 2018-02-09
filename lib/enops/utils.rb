@@ -1,6 +1,7 @@
 require 'retryable'
 require 'active_support/core_ext/hash/except'
 require 'pty'
+require 'open3'
 
 module Enops
   module Utils
@@ -20,13 +21,22 @@ module Enops
       end
     end
 
-    def execute(cmd, &block)
+    def execute(cmd, options = {}, &block)
+      options = {pty: true}.merge(options)
+
       output_io = StringIO.new
 
-      status = PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
-        log_io_lines(r, output_io, &block)
-        Process.wait(pid)
-        $?
+      status = if options.fetch(:pty)
+        PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
+          log_io_lines(r, output_io, &block)
+          Process.wait(pid)
+          $?
+        end
+      else
+        Open3.popen2 "(#{cmd}) 2>&1" do |stdin, stdout, wait_thread|
+          log_io_lines(stdout, output_io, &block)
+          wait_thread.value
+        end
       end
 
       raise "#{cmd.inspect} failed with exit status #{status.exitstatus}" unless status.success?
