@@ -22,5 +22,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'netrc'
   spec.add_dependency 'heroics', '~> 0.0.14'
   spec.add_dependency 'retryable', '~> 2.0'
-  spec.add_dependency 'activesupport', '~> 4.0'
+  spec.add_dependency 'activesupport', '>= 4.0', '< 6.0'
 end
