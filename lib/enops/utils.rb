@@ -34,19 +34,19 @@ module Enops
     end
 
     def execute(cmd, options = {}, &block)
-      options = {pty: true}.merge(options)
+      options = {pty: true, quiet: false}.merge(options)
 
       output_io = StringIO.new
 
       status = if options.fetch(:pty)
         PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
-          log_io_lines(r, output_io, &block)
+          log_io_lines(r, output_io, options.fetch(:quiet), &block)
           Process.wait(pid)
         end
         $?
       else
         Open3.popen2 "(#{cmd}) 2>&1" do |stdin, stdout, wait_thread|
-          log_io_lines(stdout, output_io, &block)
+          log_io_lines(stdout, output_io, options.fetch(:quiet), &block)
           wait_thread.value
         end
       end
@@ -60,14 +60,14 @@ module Enops
 
     private
 
-    def log_io_lines(src, dst)
+    def log_io_lines(src, dst, quiet)
       begin
         loop do
           line = src.readline
           dst << line
           if block_given?
             yield line
-          else
+          elsif !quiet
             Enops.logger.debug line.chomp
           end
         end
