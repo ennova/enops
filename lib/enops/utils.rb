@@ -30,8 +30,8 @@ module Enops
         PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
           log_io_lines(r, output_io, &block)
           Process.wait(pid)
-          $?
         end
+        $?
       else
         Open3.popen2 "(#{cmd}) 2>&1" do |stdin, stdout, wait_thread|
           log_io_lines(stdout, output_io, &block)
