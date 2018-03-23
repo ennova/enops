@@ -4,6 +4,18 @@ require 'pty'
 require 'open3'
 
 module Enops
+  class ExecuteError < StandardError
+    attr_reader :cmd, :status, :output
+
+    def initialize(options = {})
+      @cmd = options.fetch(:cmd)
+      @status = options.fetch(:status)
+      @output = options.fetch(:output)
+
+      super "#{cmd.inspect} failed with exit status #{status.exitstatus}"
+    end
+  end
+
   module Utils
     extend self
 
@@ -39,7 +51,9 @@ module Enops
         end
       end
 
-      raise "#{cmd.inspect} failed with exit status #{status.exitstatus}" unless status.success?
+      unless status.success?
+        raise ExecuteError.new(cmd: cmd, status: status, output: output_io.string)
+      end
 
       output_io.string
     end
