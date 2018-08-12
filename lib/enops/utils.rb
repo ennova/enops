@@ -23,7 +23,7 @@ module Enops
       caller[1][/`([^']*)'$/, 1]
     end
 
-    def with_retry(tries: 1, sleep: 1, on: StandardError, caller_label: self.caller_label)
+    def with_retry(tries:, sleep:, on: StandardError, caller_label: self.caller_label)
       Retryable.retryable(tries: tries, sleep: sleep, on: on) do |try_num|
         Enops.logger.warn "Retrying #{caller_label} (try #{try_num+1} of #{tries})" if try_num > 0
         yield
