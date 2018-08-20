@@ -20,9 +20,22 @@ module Enops
     AUTOSCALING_LAUNCH_NAMESPACE = 'aws:autoscaling:launchconfiguration'
     AUTOSCALING_GROUP_NAMESPACE = 'aws:autoscaling:asg'
 
-    def initialize(region: nil, credentials: nil)
+    def initialize(region: nil, credentials: nil, cached: false)
       @region = region
       @credentials = credentials
+      @cache = cached ? {} : nil
+    end
+
+    def cached
+      self.class.new(
+        region: region,
+        credentials: credentials,
+        cached: true,
+      )
+    end
+
+    def cached?
+      !@cache.nil?
     end
 
     def app_names
@@ -354,8 +367,20 @@ module Enops
       @s3_client ||= Aws::S3::Client.new(client_options)
     end
 
+    def cacheable(key)
+      if @cache
+        @cache.fetch(key) do
+          @cache[key] = yield
+        end
+      else
+        yield
+      end
+    end
+
     def environments
-      eb_client.describe_environments.flat_map(&:environments).index_by(&:environment_name)
+      cacheable "environments" do
+        eb_client.describe_environments.flat_map(&:environments).index_by(&:environment_name)
+      end
     end
 
     def app_environments
@@ -378,10 +403,12 @@ module Enops
     end
 
     def get_environment_settings(environment_name)
-      eb_client.describe_configuration_settings(
-        application_name: APPLICATION_NAME,
-        environment_name: environment_name
-      ).configuration_settings.first.option_settings
+      cacheable "get_environment_settings:#{environment_name}" do
+        eb_client.describe_configuration_settings(
+          application_name: APPLICATION_NAME,
+          environment_name: environment_name
+        ).configuration_settings.first.option_settings
+      end
     end
 
     def get_environment_config_vars(environment_name)
