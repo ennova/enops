@@ -13,8 +13,8 @@ Gem::Specification.new do |spec|
   spec.homepage = 'https://github.com/ennova/enops'
 
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  spec.bindir = 'exe'
-  spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.bindir = 'bin'
+  spec.executables = %w[enops]
   spec.require_paths = ['lib']
   spec.required_ruby_version = '~> 2.4'
 
@@ -32,4 +32,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'net-ssh-gateway', '~> 2.0'
   spec.add_dependency 'climate_control', '~> 0.2.0'
   spec.add_dependency 'rubyzip', '~> 1.2'
+  spec.add_dependency 'clamp', '~> 1.3'
+  spec.add_dependency 'tty-table', '~> 0.8.0'
 end

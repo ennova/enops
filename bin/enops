@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'enops'
+require 'enops/cli'
+require 'logger'
+
+Enops.logger = Logger.new STDOUT
+
+Enops::CLI::MainCommand.run
