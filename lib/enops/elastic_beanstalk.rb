@@ -530,8 +530,10 @@ module Enops
     def docker_log_tail_cmd
       <<-SH.strip_heredoc.strip
         set -euo pipefail
-        CONTAINER_ID="$(cat /etc/elasticbeanstalk/.aws_beanstalk.staging-container-id 2> /dev/null || cat /etc/elasticbeanstalk/.aws_beanstalk.current-container-id)"
-        sudo docker logs --timestamps --follow --since 1m "${CONTAINER_ID?}"
+        while true; do
+          CONTAINER_ID="$(cat /etc/elasticbeanstalk/.aws_beanstalk.staging-container-id 2> /dev/null || cat /etc/elasticbeanstalk/.aws_beanstalk.current-container-id)"
+          sudo docker logs --timestamps --follow --since 1m "${CONTAINER_ID?}"
+        done
       SH
     end
 
