@@ -371,6 +371,10 @@ module Enops::CLI::ElasticBeanstalk
     end
   end
 
+  class PostgresCommand < Clamp::Command
+    subcommand 'run', 'run PostgreSQL command (e.g. psql)', RunPostgresCommand
+  end
+
   class MainCommand < Clamp::Command
     subcommand 'apps', 'list all application names', ListCommand
     subcommand 'status', 'show high-level application status', StatusCommand
@@ -381,7 +385,7 @@ module Enops::CLI::ElasticBeanstalk
     subcommand 'restart', 'restart application processes', RestartCommand
     subcommand 'config', 'show current configuration environment variables', GetConfigCommand
     subcommand 'config:set', 'update configuration environment variables', SetConfigCommand
-    subcommand 'pg', 'run PostgreSQL command (e.g. psql)', RunPostgresCommand
+    subcommand 'pg', 'PostgreSQL tools', PostgresCommand
     subcommand 'run', 'run application command (e.g. console)', RunAppCommand
     subcommand 'ssh', 'SSH to an application EC2 instance (for debugging)', RunInstanceSSHCommand
     subcommand 'tail', 'tail the application log', TailAppLogCommand
