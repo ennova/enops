@@ -532,7 +532,8 @@ module Enops
         set -euo pipefail
         while true; do
           CONTAINER_ID="$(cat /etc/elasticbeanstalk/.aws_beanstalk.staging-container-id 2> /dev/null || cat /etc/elasticbeanstalk/.aws_beanstalk.current-container-id)"
-          sudo docker logs --timestamps --follow --since 1m "${CONTAINER_ID?}"
+          sudo docker logs --timestamps --follow --since 1m "${CONTAINER_ID?}" 2>&1 | \
+            gawk '{ print substr(CONTAINER_ID, 0, 12) " " $0; fflush(); }' CONTAINER_ID="${CONTAINER_ID?}"
         done
       SH
     end
