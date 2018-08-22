@@ -297,6 +297,20 @@ module Enops
       end
     end
 
+    def pg_restore!(app_name, backup_url)
+      run_app_cmd! app_name, <<-SH.strip_heredoc.strip
+        wget -O /tmp/backup.dump #{Shellwords.escape backup_url}
+        pg_restore -l /tmp/backup.dump | grep -v 'COMMENT - EXTENSION' > /tmp/backup.list
+        PGUSER="$(echo "${DATABASE_URL?}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
+        echo Resetting...
+        PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL?}" -c "DROP OWNED BY ${PGUSER?} CASCADE; CREATE SCHEMA public;"
+        echo Restoring...
+        pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL?}" --exit-on-error -L /tmp/backup.list /tmp/backup.dump
+        echo Done.
+        rm /tmp/backup.list /tmp/backup.dump
+      SH
+    end
+
     def run_instance_ssh!(app_name, env_type:, cmd: nil)
       instance_id = get_instances(app_name).fetch(env_type).sample
       system "#{instance_ssh_cmd(instance_id)} #{Shellwords.escape cmd}"

@@ -289,6 +289,20 @@ module Enops::CLI::ElasticBeanstalk
     end
   end
 
+  class RestorePostgresCommand < AppCommand
+    parameter 'BACKUP_URL', 'URL to database backup to restore'
+
+    option '--confirm', 'CONFIRM', nil, hidden: true, required: true
+
+    def execute
+      unless confirm == app_name
+        signal_usage_error "Confirmation #{confirm.inspect} does not match #{app_name.inspect}"
+      end
+
+      api.pg_restore! app_name, backup_url
+    end
+  end
+
   class RunAppCommand < AppCommand
     parameter 'CMD ...', 'application command to run (e.g. "console")'
 
@@ -373,6 +387,7 @@ module Enops::CLI::ElasticBeanstalk
 
   class PostgresCommand < Clamp::Command
     subcommand 'run', 'run PostgreSQL command (e.g. psql)', RunPostgresCommand
+    subcommand 'restore', 'restore PostgreSQL database from a backup URL', RestorePostgresCommand
   end
 
   class MainCommand < Clamp::Command
