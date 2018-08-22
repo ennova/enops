@@ -2,6 +2,7 @@ require 'active_support/core_ext/enumerable'
 require 'active_support/core_ext/hash/slice'
 require 'active_support/core_ext/hash/reverse_merge'
 require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/module/delegation'
 require 'active_support/core_ext/string/filters'
 require 'active_support/core_ext/string/strip'
 require 'enops/aws_auth'
@@ -163,7 +164,7 @@ module Enops
 
         values.each do |env_type, value|
           environment_name = envs.fetch(env_type) do
-            raise "Unknown environment type: #{env_type.inspect}"
+            raise UserMessageError, "Unknown environment type: #{env_type.inspect}"
           end
 
           env_type_updates[env_type] ||= {
@@ -225,7 +226,7 @@ module Enops
 
       scaling.each do |env_type, values|
         environment_name = envs.fetch(env_type) do
-          raise "Unknown environment type: #{env_type.inspect}"
+          raise UserMessageError, "Unknown environment type: #{env_type.inspect}"
         end
 
         env_type_updates[env_type] ||= {
@@ -241,7 +242,7 @@ module Enops
           when 'type'
             [AUTOSCALING_LAUNCH_NAMESPACE, 'InstanceType']
           else
-            raise ArgumentError, "Unknown scaling option: #{key}"
+            raise UserMessageError, "Unknown scaling option: #{key}"
           end
 
           env_type_updates[env_type][:option_settings] ||= []
@@ -383,20 +384,38 @@ module Enops
       end
     end
 
+    class AppEnvironments
+      def initialize
+        @data ||= {}
+      end
+
+      delegate :keys, :transform_values, to: :@data
+
+      def fetch(app_name)
+        @data.fetch(app_name) do
+          raise UserMessageError, "Unknown application name: #{app_name.inspect}"
+        end
+      end
+
+      def add(app_name:, env_type:, environment:)
+        @data[app_name] ||= {
+          'web' => nil,
+          'worker' => nil,
+        }
+        @data[app_name][env_type] = environment
+      end
+    end
+
     def app_environments
       begin
-        result = {}
+        result = AppEnvironments.new
         environments.values.each do |environment|
           match = /^(?<app_name>e7(?:stg)?-.+?)-(?<env_type>[^-]+(?:-\d+)?)$/.match(environment.environment_name)
           raise "Could not parse #{environment.environment_name.inspect}" unless match
           app_name = match.named_captures.fetch('app_name')
           env_type = match.named_captures.fetch('env_type')
 
-          result[app_name] ||= {
-            'web' => nil,
-            'worker' => nil,
-          }
-          result[app_name][env_type] = environment
+          result.add app_name: app_name, env_type: env_type, environment: environment
         end
         result
       end
@@ -452,7 +471,7 @@ module Enops
     def identity_path(key_name)
       path = File.expand_path("~/.ssh/#{key_name}.pem")
       unless File.exist?(path)
-        raise "Could not find SSH key: #{key_name.inspect}"
+        raise UserMessageError, "Could not find SSH key: #{key_name.inspect}"
       end
       path
     end
@@ -622,7 +641,7 @@ module Enops
 
     def build_dockerrun_json(version_label)
       unless image_exists?(version_label)
-        raise ArgumentError, "Could not find image for #{version_label.inspect}"
+        raise UserMessageError, "Could not find image for #{version_label.inspect}"
       end
 
       data = {

@@ -12,4 +12,6 @@ module Enops
     raise 'Enops.logger has not been set' unless @logger
     @logger
   end
+
+  class UserMessageError < StandardError; end
 end

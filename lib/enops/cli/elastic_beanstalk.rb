@@ -7,7 +7,7 @@ module Enops::CLI::ElasticBeanstalk
   module ErrorHandling
     def execute
       super
-    rescue Enops::ExecuteError, Aws::Errors::ServiceError => e
+    rescue Enops::UserMessageError, Enops::ExecuteError, Aws::Errors::ServiceError, Aws::Errors::MissingCredentialsError, Aws::Errors::InvalidProcessCredentialsPayload, Aws::Errors::MissingRegionError => e
       $stderr.puts "#{e.message}"
       exit 1
     end
