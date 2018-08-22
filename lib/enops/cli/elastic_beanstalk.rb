@@ -344,7 +344,19 @@ module Enops::CLI::ElasticBeanstalk
   class DeployCommand < AppCommand
     option '--force-version', :flag, 'force deployment of non-ref (ref-*) or release (v*) version label'
 
-    parameter 'VERSION_LABEL', 'version of application to deploy'
+    parameter 'VERSION', 'version of application to deploy (version label or git ref)'
+
+    def version_label
+      @version_label ||= begin
+        git_sha = `git rev-parse --verify #{Shellwords.escape version} 2> /dev/null`.chomp
+        if $?.success?
+          raise unless git_sha.size == 40
+          "ref-#{git_sha}"
+        else
+          version
+        end
+      end
+    end
 
     def execute
       unless version_label =~ /^ref-|^v\d/
