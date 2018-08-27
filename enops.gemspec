@@ -30,6 +30,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'aws-sdk-ecr', '~> 1.4'
   spec.add_dependency 'aws-sdk-s3', '~> 1.17'
   spec.add_dependency 'net-ssh-gateway', '~> 2.0'
+  spec.add_dependency 'ed25519', '~> 1.2'
+  spec.add_dependency 'bcrypt_pbkdf', '~> 1.0'
   spec.add_dependency 'climate_control', '~> 0.2.0'
   spec.add_dependency 'rubyzip', '~> 1.2'
   spec.add_dependency 'clamp', '~> 1.3'

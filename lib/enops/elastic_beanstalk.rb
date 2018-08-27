@@ -493,9 +493,7 @@ module Enops
     def bastion_gateway
       @bastion_gateway ||= Net::SSH::Gateway.new(
         bastion_instance.public_dns_name,
-        'ec2-user', keys: [
-          identity_path(bastion_instance.key_name),
-        ],
+        'root',
       )
     end
 
@@ -528,8 +526,7 @@ module Enops
       proxy_cmd = <<-SH.squish
         ssh
         -W %h:%p
-        -i #{Shellwords.escape identity_path(bastion_instance.key_name)}
-        ec2-user@#{Shellwords.escape bastion_instance.public_dns_name}
+        root@#{Shellwords.escape bastion_instance.public_dns_name}
       SH
 
       <<-SH.squish
