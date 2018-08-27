@@ -482,11 +482,30 @@ module Enops
       end
     end
 
+    def generate_ec2_key_fingerprint(path)
+      cmd = "openssl pkcs8 -in #{Shellwords.escape(path)} -inform PEM -outform DER -topk8 -nocrypt 2> /dev/null"
+      data = Kernel.open("|#{cmd}", 'r:binary') { |io| io.read }
+      digest = Digest::SHA1.hexdigest(data)
+      digest.gsub(/..(?=.)/, '\0:')
+    end
+
     def identity_path(key_name)
-      path = File.expand_path("~/.ssh/#{key_name}.pem")
-      unless File.exist?(path)
-        raise UserMessageError, "Could not find SSH key: #{key_name.inspect}"
+      key_fingerprint = ec2_client.describe_key_pairs(
+        filters: [{name: 'key-name', values: [key_name]}]
+      ).key_pairs.first&.key_fingerprint
+
+      unless key_fingerprint
+        raise UserMessageError, "Could not find key pair fingerprint for #{key_name.inspect}"
       end
+
+      path = Dir[File.expand_path('~/.ssh/*.pem')].detect do |path|
+        generate_ec2_key_fingerprint(path) == key_fingerprint
+      end
+
+      unless path
+        raise UserMessageError, "Could not find #{key_name.inspect} SSH key with fingerprint #{key_fingerprint}"
+      end
+
       path
     end
 
