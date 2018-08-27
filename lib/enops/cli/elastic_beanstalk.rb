@@ -346,7 +346,7 @@ module Enops::CLI::ElasticBeanstalk
       else
         rows = versions.map do |version|
           {
-            version_labels: version.fetch(:version_labels).join(', '),
+            version_labels: version.fetch(:version_labels).join(', ').presence || '(none)',
             created_at: version.fetch(:created_at),
           }
         end

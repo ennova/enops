@@ -328,7 +328,7 @@ module Enops
 
       image_details.map do |image_detail|
         {
-          version_labels: image_detail.image_tags,
+          version_labels: Array(image_detail.image_tags),
           created_at: image_detail.image_pushed_at,
         }
       end
