@@ -206,7 +206,12 @@ module Enops::CLI::ElasticBeanstalk
 
   class GetConfigCommand < AppCommand
     option '--json', :flag, 'format output as JSON'
-    parameter '[KEY]', 'retrieve single environment variable'
+    parameter '[KEY]', 'retrieve single environment variable' do |value|
+      unless value =~ /\A[A-Z0-9_]+\z/
+        raise ArgumentError, 'invalid environment variable name'
+      end
+      value
+    end
 
     def execute
       data = api.get_config_vars(app_name)
