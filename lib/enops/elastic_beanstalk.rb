@@ -692,6 +692,17 @@ module Enops
       JSON.pretty_generate(data)
     end
 
+    def get_file_content(name)
+      File.read("#{File.dirname(__FILE__)}/data/elastic_beanstalk/#{name}")
+    end
+
+    def patch_command(patch_path)
+      {
+        test: "patch --forward --dry-run --directory=/ --strip=0 --input=#{patch_path}",
+        command: "patch --force --directory=/ --strip=0 --input=#{patch_path}",
+      }
+    end
+
     def ebextensions
       {
         migrations: {
@@ -699,6 +710,32 @@ module Enops
             migrations: {
               command: "#{docker_run_cmd} bundle exec rake db:migrate",
             },
+          },
+        },
+        delay_bad_gateway: {
+          packages: {
+            yum: {
+              'patch' => [],
+              'nginx-mod-http-perl' => [],
+            }
+          },
+          files: {
+            '/etc/nginx/perl/lib/delay.pm' => {
+              content: get_file_content('delay_bad_gateway/delay.pm'),
+            },
+            '/etc/nginx/conf.d/delay.conf' => {
+              content: get_file_content('delay_bad_gateway/delay.conf'),
+            },
+            '/etc/nginx/nginx.conf.delay.patch' => {
+              content: get_file_content('delay_bad_gateway/nginx.conf.patch'),
+            },
+            '/opt/elasticbeanstalk/hooks/common.sh.delay.patch' => {
+              content: get_file_content('delay_bad_gateway/hooks_common.patch'),
+            }
+          },
+          commands: {
+            patch_nginx_conf: patch_command('/etc/nginx/nginx.conf.delay.patch'),
+            patch_eb_hook: patch_command('/opt/elasticbeanstalk/hooks/common.sh.delay.patch'),
           },
         },
       }
