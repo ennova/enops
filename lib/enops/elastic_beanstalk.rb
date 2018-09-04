@@ -738,6 +738,16 @@ module Enops
             patch_eb_hook: patch_command('/opt/elasticbeanstalk/hooks/common.sh.delay.patch'),
           },
         },
+        request_start: {
+          files: {
+            '/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.request_start.patch' => {
+              content: get_file_content('request_start/docker_proxy.conf.patch'),
+            },
+          },
+          commands: {
+            patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.request_start.patch'),
+          },
+        },
       }
     end
 
