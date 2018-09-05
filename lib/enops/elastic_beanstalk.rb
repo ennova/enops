@@ -696,10 +696,56 @@ module Enops
       File.read("#{File.dirname(__FILE__)}/data/elastic_beanstalk/#{name}")
     end
 
-    def patch_command(patch_path)
+    def extract_patch_target_path(content)
+      target_paths = content.scan(/^[+]{3} ([^\t\n ]+)/).flatten
+      raise ArgumentError unless target_paths.size == 1
+      target_paths.first
+    end
+
+    def make_patch_path(name, target_path)
+      "#{target_path}.#{File.dirname(name)}.patch"
+    end
+
+    def config_file(name, path)
+      raise ArgumentError if name.end_with?('.patch')
+
       {
-        test: "patch --forward --dry-run --directory=/ --strip=0 --input=#{patch_path}",
-        command: "patch --force --directory=/ --strip=0 --input=#{patch_path}",
+        path => {
+          content: get_file_content(name),
+        },
+      }
+    end
+
+    def patch_file(name)
+      raise ArgumentError unless name.end_with?('.patch')
+
+      content = get_file_content(name)
+      target_path = extract_patch_target_path(content)
+      patch_path = make_patch_path(name, target_path)
+
+      {
+        patch_path => {
+          content: content,
+        },
+      }
+    end
+
+    def patch_command(name)
+      raise ArgumentError unless name.end_with?('.patch')
+
+      content = get_file_content(name)
+      target_path = extract_patch_target_path(content)
+      patch_path = make_patch_path(name, target_path)
+
+      command_name = "patch_#{name.sub(/\.patch$/, '').gsub(/[\/.]/, '_')}"
+      test_command = "patch --forward --dry-run --directory=/ --strip=0 --input=#{patch_path}"
+      patch_command = "patch --force --directory=/ --strip=0 --input=#{patch_path}"
+
+      {
+        command_name.to_sym => {
+          test: test_command,
+          command: patch_command,
+        },
       }
     end
 
@@ -719,57 +765,41 @@ module Enops
               'nginx-mod-http-perl' => [],
             }
           },
-          files: {
-            '/etc/nginx/perl/lib/delay.pm' => {
-              content: get_file_content('delay_bad_gateway/delay.pm'),
-            },
-            '/etc/nginx/conf.d/delay.conf' => {
-              content: get_file_content('delay_bad_gateway/delay.conf'),
-            },
-            '/etc/nginx/nginx.conf.delay.patch' => {
-              content: get_file_content('delay_bad_gateway/nginx.conf.patch'),
-            },
-            '/opt/elasticbeanstalk/hooks/common.sh.delay.patch' => {
-              content: get_file_content('delay_bad_gateway/hooks_common.patch'),
-            }
-          },
-          commands: {
-            patch_nginx_conf: patch_command('/etc/nginx/nginx.conf.delay.patch'),
-            patch_eb_hook: patch_command('/opt/elasticbeanstalk/hooks/common.sh.delay.patch'),
-          },
+          files: [
+            config_file('delay_bad_gateway/delay.pm', '/etc/nginx/perl/lib/delay.pm'),
+            config_file('delay_bad_gateway/delay.conf', '/etc/nginx/conf.d/delay.conf'),
+            patch_file('delay_bad_gateway/nginx.conf.patch'),
+            patch_file('delay_bad_gateway/hooks_common.patch'),
+          ].inject(:merge),
+          commands: [
+            patch_command('delay_bad_gateway/nginx.conf.patch'),
+            patch_command('delay_bad_gateway/hooks_common.patch'),
+          ].inject(:merge),
         },
         request_start: {
-          files: {
-            '/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.request_start.patch' => {
-              content: get_file_content('request_start/docker_proxy.conf.patch'),
-            },
-          },
-          commands: {
-            patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.request_start.patch'),
-          },
+          files: [
+            patch_file('request_start/docker_proxy.conf.patch'),
+          ].inject(:merge),
+          commands: [
+            patch_command('request_start/docker_proxy.conf.patch'),
+          ].inject(:merge),
         },
         log_format: {
-          files: {
-            '/etc/nginx/conf.d/log_format.conf' => {
-              content: get_file_content('log_format/log_format.conf'),
-            },
-            '/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.log_format.patch' => {
-              content: get_file_content('log_format/docker_proxy.conf.patch'),
-            },
-          },
-          commands: {
-            patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.log_format.patch'),
-          },
+          files: [
+            config_file('log_format/log_format.conf', '/etc/nginx/conf.d/log_format.conf'),
+            patch_file('log_format/docker_proxy.conf.patch'),
+          ].inject(&:merge),
+          commands: [
+            patch_command('log_format/docker_proxy.conf.patch'),
+          ].inject(&:merge),
         },
         reject_bad_host: {
-          files: {
-            '/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.reject_bad_host.patch' => {
-              content: get_file_content('reject_bad_host/docker_proxy.conf.patch'),
-            },
-          },
-          commands: {
-            patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.reject_bad_host.patch'),
-          },
+          files: [
+            patch_file('reject_bad_host/docker_proxy.conf.patch'),
+          ].inject(:merge),
+          commands: [
+            patch_command('reject_bad_host/docker_proxy.conf.patch'),
+          ].inject(:merge),
         },
       }
     end
