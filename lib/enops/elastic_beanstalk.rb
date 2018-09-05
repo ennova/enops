@@ -475,15 +475,16 @@ module Enops
     end
 
     def bastion_instance
-      @bastion_instance ||= begin
-        instance = find_instance(
-          'instance.group-name' => 'bastion'
-        )
-        if instance.public_dns_name.blank?
-          raise "Expected bastion host #{instance.instance_id} to have a public DNS name"
-        end
-        instance
+      @bastion_instance ||= find_instance(
+        'instance.group-name' => 'bastion'
+      )
+    end
+
+    def bastion_instance_hostname
+      if bastion_instance.public_dns_name.blank?
+        raise "Expected bastion host #{bastion_instance.instance_id} to have a public DNS name"
       end
+      bastion_instance.public_dns_name
     end
 
     def generate_ec2_key_fingerprint(path)
@@ -515,7 +516,7 @@ module Enops
 
     def bastion_gateway
       @bastion_gateway ||= Net::SSH::Gateway.new(
-        bastion_instance.public_dns_name,
+        bastion_instance_hostname,
         'root',
       )
     end
@@ -549,7 +550,7 @@ module Enops
       proxy_cmd = <<-SH.squish
         ssh
         -W %h:%p
-        root@#{Shellwords.escape bastion_instance.public_dns_name}
+        root@#{Shellwords.escape bastion_instance_hostname}
       SH
 
       <<-SH.squish
