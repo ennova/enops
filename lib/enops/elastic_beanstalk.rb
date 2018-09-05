@@ -730,7 +730,7 @@ module Enops
       }
     end
 
-    def patch_command(name)
+    def patch_command(name, success_content)
       raise ArgumentError unless name.end_with?('.patch')
 
       content = get_file_content(name)
@@ -738,7 +738,7 @@ module Enops
       patch_path = make_patch_path(name, target_path)
 
       command_name = "patch_#{name.sub(/\.patch$/, '').gsub(/[\/.]/, '_')}"
-      test_command = "patch --forward --dry-run --directory=/ --strip=0 --input=#{patch_path}"
+      test_command = "grep -qF #{Shellwords.escape success_content} #{Shellwords.escape target_path}"
       patch_command = "patch --force --directory=/ --strip=0 --input=#{patch_path}"
 
       {
@@ -772,8 +772,8 @@ module Enops
             patch_file('delay_bad_gateway/hooks_common.patch'),
           ].inject(:merge),
           commands: [
-            patch_command('delay_bad_gateway/nginx.conf.patch'),
-            patch_command('delay_bad_gateway/hooks_common.patch'),
+            patch_command('delay_bad_gateway/nginx.conf.patch', 'ngx_http_perl_module'),
+            patch_command('delay_bad_gateway/hooks_common.patch', 'server 127.0.0.1:8501'),
           ].inject(:merge),
         },
         request_start: {
@@ -781,7 +781,7 @@ module Enops
             patch_file('request_start/docker_proxy.conf.patch'),
           ].inject(:merge),
           commands: [
-            patch_command('request_start/docker_proxy.conf.patch'),
+            patch_command('request_start/docker_proxy.conf.patch', 'X-Request-Start'),
           ].inject(:merge),
         },
         log_format: {
@@ -790,7 +790,7 @@ module Enops
             patch_file('log_format/docker_proxy.conf.patch'),
           ].inject(&:merge),
           commands: [
-            patch_command('log_format/docker_proxy.conf.patch'),
+            patch_command('log_format/docker_proxy.conf.patch', 'access.log combined_extra'),
           ].inject(&:merge),
         },
         reject_bad_host: {
@@ -798,7 +798,7 @@ module Enops
             patch_file('reject_bad_host/docker_proxy.conf.patch'),
           ].inject(:merge),
           commands: [
-            patch_command('reject_bad_host/docker_proxy.conf.patch'),
+            patch_command('reject_bad_host/docker_proxy.conf.patch', 'reject_bad_host'),
           ].inject(:merge),
         },
       }
