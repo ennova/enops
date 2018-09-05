@@ -743,8 +743,7 @@ module Enops
 
       {
         command_name.to_sym => {
-          test: test_command,
-          command: patch_command,
+          command: "#{test_command} || #{patch_command} && #{test_command}",
         },
       }
     end
