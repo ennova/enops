@@ -812,8 +812,8 @@ module Enops
           io.write build_dockerrun_json(version_label)
         end
 
-        ebextensions.each do |name, data|
-          zipfile.get_output_stream(".ebextensions/#{name}.config") do |io|
+        ebextensions.each_with_index do |(name, data), index|
+          zipfile.get_output_stream(".ebextensions/#{'%02d' % [index+1]}_#{name}.config") do |io|
             io.write JSON.pretty_generate(data)
           end
         end
