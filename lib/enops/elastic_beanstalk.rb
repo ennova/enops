@@ -761,6 +761,16 @@ module Enops
             patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.log_format.patch'),
           },
         },
+        reject_bad_host: {
+          files: {
+            '/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.reject_bad_host.patch' => {
+              content: get_file_content('reject_bad_host/docker_proxy.conf.patch'),
+            },
+          },
+          commands: {
+            patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.reject_bad_host.patch'),
+          },
+        },
       }
     end
 
