@@ -748,6 +748,19 @@ module Enops
             patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.request_start.patch'),
           },
         },
+        log_format: {
+          files: {
+            '/etc/nginx/conf.d/log_format.conf' => {
+              content: get_file_content('log_format/log_format.conf'),
+            },
+            '/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.log_format.patch' => {
+              content: get_file_content('log_format/docker_proxy.conf.patch'),
+            },
+          },
+          commands: {
+            patch_docker_proxy_conf: patch_command('/etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.log_format.patch'),
+          },
+        },
       }
     end
 
