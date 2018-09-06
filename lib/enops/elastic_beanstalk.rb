@@ -484,7 +484,9 @@ module Enops
       if bastion_instance.public_dns_name.blank?
         raise "Expected bastion host #{bastion_instance.instance_id} to have a public DNS name"
       end
-      bastion_instance.public_dns_name
+      hostname = bastion_instance.tags.detect { |tag| tag.key == 'Name' && tag.value.start_with?('bastion.') }&.value
+      hostname ||= bastion_instance.public_dns_name
+      hostname
     end
 
     def generate_ec2_key_fingerprint(path)
