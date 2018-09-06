@@ -326,8 +326,10 @@ module Enops::CLI::ElasticBeanstalk
   end
 
   class TailAppLogCommand < AppCommand
+    option '--env-type', 'ENV_TYPE', 'environment to tail logs from'
+
     def execute
-      api.tail_app_log! app_name
+      api.tail_app_log! app_name, env_type: env_type
     end
   end
 

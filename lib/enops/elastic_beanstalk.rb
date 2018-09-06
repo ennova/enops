@@ -316,8 +316,12 @@ module Enops
       system "#{instance_ssh_cmd(instance_id)} #{Shellwords.escape cmd}"
     end
 
-    def tail_app_log!(app_name)
-      instance_ids = get_instances(app_name).values.flatten
+    def tail_app_log!(app_name, env_type: nil)
+      instance_ids = if env_type
+        get_instances(app_name).fetch(env_type)
+      else
+        get_instances(app_name).values.flatten
+      end
       run_on_instances! instance_ids, docker_log_tail_cmd
     end
 
