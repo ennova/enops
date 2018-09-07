@@ -1,0 +1,24 @@
+--- /etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf.org
++++ /etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf
+@@ -7,8 +7,13 @@
+         default "$msec";
+         ~. "$http_X_Request_Start";
+     }
+ 
++    map $http_X_Amzn_Trace_Id $x_request_id {
++        default "";
++	"~^[^=]+=(?<id>[^;]+)" "$id";
++    }
++
+     map $http_x_forwarded_for $is_forwarded {
+         default "1";
+         "" "0";
+     }
+@@ -55,6 +60,7 @@
+             proxy_set_header    Host                $host;
+             proxy_set_header    X-Real-IP            $remote_addr;
+             proxy_set_header    X-Forwarded-For        $proxy_add_x_forwarded_for;
+             proxy_set_header    X-Request-Start        $request_start;
++            proxy_set_header    X-Request-Id           $x_request_id;
+         }
+     }

@@ -1,0 +1,10 @@
+--- /etc/nginx/conf.d/log_format.conf.org
++++ /etc/nginx/conf.d/log_format.conf
+@@ -4,6 +4,7 @@
+   '"$http_referer" "$http_user_agent"'
+   ' "$http_host"'
+   ' "$http_x_forwarded_proto"'
+   ' "$http_x_forwarded_for"'
++  ' "$x_request_id"'
+   ' $request_time'
+   ;

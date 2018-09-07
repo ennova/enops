@@ -800,6 +800,16 @@ module Enops
             patch_command('reject_bad_host/docker_proxy.conf.patch', 'reject_bad_host'),
           ].inject(:merge),
         },
+        request_id: {
+          files: [
+            patch_file('request_id/docker_proxy.conf.patch'),
+            patch_file('request_id/log_format.conf.patch'),
+          ].inject(:merge),
+          commands: [
+            patch_command('request_id/docker_proxy.conf.patch', 'x_request_id'),
+            patch_command('request_id/log_format.conf.patch', 'x_request_id'),
+          ].inject(:merge),
+        }
       }
     end
 
