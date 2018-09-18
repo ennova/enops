@@ -207,12 +207,9 @@ module Enops
     def postgresql_backups_url(app_name, backup_id)
       output = cmd app_name, "pg:backups:url #{Shellwords.escape backup_id}"
 
-      url = output.lines.first.strip
-      unless url.start_with? 'https://'
-        raise "Unexpected backup URL: #{url.inspect}"
-      end
-
-      url
+      urls = output.lines.grep(%r{^https://})
+      raise "Could not extract backup URL from output" unless urls.size == 1
+      urls.first.chomp
     end
 
     private
