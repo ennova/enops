@@ -107,12 +107,29 @@ module Enops::CLI::ElasticBeanstalk
     option '--json', :flag, 'format output as JSON'
 
     def execute
-      data = api.app_versions
+      cached_api = api.cached
+
+      rows = cached_api.app_versions.map do |app_name, version_label|
+        row = {
+          app_name: app_name,
+          version_label: version_label,
+        }
+
+        cached_api.get_status(app_name).each do |env_type, env_status|
+          row["#{env_type}_status".to_sym] = if json?
+            env_status
+          else
+            "#{env_status.fetch(:status)} (health: #{env_status.fetch(:health_status)} (#{env_status.fetch(:health)}))"
+          end
+        end
+
+        row
+      end
 
       if json?
-        puts JSON.dump(data)
+        puts JSON.dump(rows)
       else
-        table header: ['Application Name', 'Version Label'], rows: data.to_a
+        table rows: rows
       end
     end
   end
