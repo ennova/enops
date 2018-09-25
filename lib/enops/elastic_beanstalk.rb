@@ -398,7 +398,9 @@ module Enops
 
     def environments
       cacheable "environments" do
-        eb_client.describe_environments.flat_map(&:environments).index_by(&:environment_name)
+        eb_client.describe_environments.flat_map(&:environments)
+          .select { |environment| environment.application_name == APPLICATION_NAME }
+          .index_by(&:environment_name)
       end
     end
 
