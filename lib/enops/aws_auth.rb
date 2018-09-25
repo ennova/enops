@@ -52,7 +52,7 @@ module Enops
     end
 
     def default_region
-      ENV.fetch('AWS_REGION', Aws.shared_config.region)
+      ENV.fetch('AWS_REGION', Aws.shared_config.region) || ENV.fetch('AWS_DEFAULT_REGION', nil)
     end
   end
 end
