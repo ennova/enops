@@ -92,7 +92,7 @@ module Enops::CLI::ElasticBeanstalk
         output_events events_response.events
         last_activity = Time.now if !events_response.events.empty?
 
-        sleep 2
+        sleep 5
         expired = Time.now > last_activity + 300
       end until status_complete?(status) || expired
 
