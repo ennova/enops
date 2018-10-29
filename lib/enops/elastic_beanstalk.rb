@@ -68,6 +68,7 @@ module Enops
           complete: complete,
           abortable_operation_in_progress: environment.abortable_operation_in_progress,
         }
+
         [env_type, data]
       end.to_h
     end
