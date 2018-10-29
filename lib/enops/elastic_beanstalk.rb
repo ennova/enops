@@ -749,7 +749,7 @@ module Enops
 
       command_name = "patch_#{name.sub(/\.patch$/, '').gsub(/[\/.]/, '_')}"
       test_command = "grep -qF #{Shellwords.escape success_content} #{Shellwords.escape target_path}"
-      patch_command = "patch --force --directory=/ --strip=0 --input=#{patch_path}"
+      patch_command = "patch --force --ignore-whitespace --directory=/ --strip=0 --input=#{patch_path}"
 
       {
         command_name.to_sym => {
