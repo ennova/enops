@@ -820,6 +820,14 @@ module Enops
             patch_command('request_id/log_format.conf.patch', 'x_request_id'),
           ].inject(:merge),
         },
+        wait_for_staging_port: {
+          files: [
+            patch_file('wait_for_staging_port/00run.sh.patch'),
+          ].inject(:merge),
+          commands: [
+            patch_command('wait_for_staging_port/00run.sh.patch', 'nc -zd'),
+          ].inject(:merge),
+        },
       }
     end
 

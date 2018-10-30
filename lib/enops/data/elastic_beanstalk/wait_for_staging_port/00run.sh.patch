@@ -1,0 +1,28 @@
+--- /opt/elasticbeanstalk/hooks/appdeploy/enact/00run.sh.org
++++ /opt/elasticbeanstalk/hooks/appdeploy/enact/00run.sh
+@@ -95,11 +95,23 @@
+ 	LOG_TAIL=`cat /tmp/docker_run.log | tail -c 200`
+ 	error_exit "Failed to run Docker container: $LOG_TAIL. Check snapshot logs for details." $DOCKER_RUN_EXIT_CODE
+ fi
+ 
+-# wait for 5 seconds then check if container is still up
++EB_CONFIG_DOCKER_STAGING_APP=`cat $EB_CONFIG_DOCKER_STAGING_APP_FILE | cut -c 1-12`
++EB_CONFIG_UPSTREAM_IP=$(docker inspect $EB_CONFIG_DOCKER_STAGING_APP | jq -r .[0].NetworkSettings.IPAddress)
++EB_CONFIG_DOCKER_PORT_FILE=$(/opt/elasticbeanstalk/bin/get-config container -k port_file)
++EB_CONFIG_UPSTREAM_PORT=$(cat $EB_CONFIG_DOCKER_PORT_FILE)
+ 
+-sleep 5
++echo "Waiting for staging app to respond on port $EB_CONFIG_UPSTREAM_PORT..."
++N=0
++while [[ $N -lt 30 ]]; do
++  N=$((N+1))
++  if nc -zd -w 1 $EB_CONFIG_UPSTREAM_IP $EB_CONFIG_UPSTREAM_PORT; then
++    break
++  fi
++  sleep 1
++done
++echo "Waited $N seconds."
+ 
+ EB_CONFIG_DOCKER_STAGING_APP=`cat $EB_CONFIG_DOCKER_STAGING_APP_FILE | cut -c 1-12`
+ if ! docker ps | grep -q $EB_CONFIG_DOCKER_STAGING_APP; then
+ 	LOG_FILE=$EB_CONFIG_DOCKER_LOG_HOST_DIR/unexpected-quit.log
