@@ -819,7 +819,7 @@ module Enops
             patch_command('request_id/docker_proxy.conf.patch', 'x_request_id'),
             patch_command('request_id/log_format.conf.patch', 'x_request_id'),
           ].inject(:merge),
-        }
+        },
       }
     end
 
