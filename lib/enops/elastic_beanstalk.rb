@@ -339,7 +339,7 @@ module Enops
       end
     end
 
-    def start_deploy(app_name, version_label, env_types: nil)
+    def start_deploy(app_name:, version_label:, env_types: nil)
       create_app_version version_label
 
       environments = app_environments.fetch(app_name)

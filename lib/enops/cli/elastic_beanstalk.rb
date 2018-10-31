@@ -404,7 +404,10 @@ module Enops::CLI::ElasticBeanstalk
       end
 
       waitable do
-        api.start_deploy app_name, version_label
+        api.start_deploy(
+          app_name: app_name,
+          version_label: version_label,
+        )
       end
     end
   end
