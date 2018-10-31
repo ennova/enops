@@ -381,6 +381,7 @@ module Enops::CLI::ElasticBeanstalk
 
   class DeployCommand < AppCommand
     option '--force-version', :flag, 'force deployment of non-ref (ref-*) or release (v*) version label'
+    option '--immutable', :flag, 'provision new EC2 instances instead of updating existing EC2 instances'
 
     parameter 'VERSION', 'version of application to deploy (version label or git ref)'
 
@@ -407,6 +408,7 @@ module Enops::CLI::ElasticBeanstalk
         api.start_deploy(
           app_name: app_name,
           version_label: version_label,
+          immutable: immutable?,
         )
       end
     end

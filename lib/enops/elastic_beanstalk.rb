@@ -339,7 +339,7 @@ module Enops
       end
     end
 
-    def start_deploy(app_name:, version_label:, env_types: nil)
+    def start_deploy(app_name:, version_label:, immutable:, env_types: nil)
       create_app_version version_label
 
       environments = app_environments.fetch(app_name)
@@ -351,6 +351,13 @@ module Enops
           environment_name: environment.environment_name,
           version_label: version_label,
         }
+
+        params[:option_settings] ||= []
+        params[:option_settings] << Aws::ElasticBeanstalk::Types::ConfigurationOptionSetting.new(
+          namespace: 'aws:elasticbeanstalk:command',
+          option_name: 'DeploymentPolicy',
+          value: immutable ? 'Immutable' : 'AllAtOnce',
+        )
 
         eb_client.update_environment(params)
       end
