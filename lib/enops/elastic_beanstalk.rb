@@ -347,10 +347,12 @@ module Enops
       environments = env_types.flat_map { |env_type| environments.fetch(env_type) }
 
       environments.map do |environment|
-        eb_client.update_environment(
+        params = {
           environment_name: environment.environment_name,
           version_label: version_label,
-        )
+        }
+
+        eb_client.update_environment(params)
       end
     end
 
