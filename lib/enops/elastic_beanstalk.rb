@@ -329,7 +329,7 @@ module Enops
     def available_versions
       image_details = ecr_client.describe_images(
         repository_name: APPLICATION_NAME,
-      ).image_details
+      ).flat_map(&:image_details)
 
       image_details.map do |image_detail|
         {
