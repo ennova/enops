@@ -332,8 +332,21 @@ module Enops
       ).flat_map(&:image_details).sort_by(&:image_pushed_at)
 
       image_details.map do |image_detail|
+        version_labels = Array(image_detail.image_tags).sort_by do |version_label|
+          priority = case version_label
+          when /^ref-/
+            0
+          when /^v/
+            1
+          else
+            2
+          end
+
+          [priority, version_label]
+        end
+
         {
-          version_labels: Array(image_detail.image_tags),
+          version_labels: version_labels,
           created_at: image_detail.image_pushed_at,
         }
       end
