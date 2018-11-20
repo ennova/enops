@@ -545,6 +545,7 @@ module Enops
       @bastion_gateway ||= Net::SSH::Gateway.new(
         bastion_instance_hostname,
         'root',
+        loop_wait: 0.1,
       )
     end
 
