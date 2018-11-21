@@ -338,7 +338,7 @@ module Enops
       end
     end
 
-    def start_deploy(app_name:, version_label:, immutable:, env_types: nil)
+    def start_deploy(app_name:, version_label:, immutable:, env_types: nil, config_vars: nil)
       create_app_version version_label
 
       environments = app_environments.fetch(app_name)
@@ -357,6 +357,15 @@ module Enops
           option_name: 'DeploymentPolicy',
           value: immutable ? 'Immutable' : 'AllAtOnce',
         )
+
+        config_vars&.each do |key, value|
+          add_option_setting(
+            params,
+            namespace: CONFIG_VAR_NAMESPACE,
+            option_name: key,
+            value: value,
+          )
+        end
 
         eb_client.update_environment(params)
       end
