@@ -315,6 +315,9 @@ module Enops
     def run_instance_ssh!(app_name, env_type:, cmd: nil)
       instance_id = get_instances(app_name).fetch(env_type).sample
       system "#{instance_ssh_cmd(instance_id)} #{Shellwords.escape cmd}"
+      unless $?.success?
+        raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
+      end
     end
 
     def tail_app_log!(app_name, env_type: nil)
