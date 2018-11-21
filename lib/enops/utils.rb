@@ -54,7 +54,15 @@ module Enops
     end
 
     def execute_interactive(cmd, raise: false)
+      org_trap_int = trap('INT') { }
+
       system cmd
+
+      if $?.termsig == Signal.list.fetch('INT')
+        trap 'INT', org_trap_int
+        Process.kill $?.termsig, 0
+      end
+
       unless $?.success?
         if raise
           raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
@@ -62,6 +70,8 @@ module Enops
           exit $?.exitstatus
         end
       end
+    ensure
+      trap 'INT', org_trap_int
     end
 
     private
