@@ -53,10 +53,14 @@ module Enops
       output_io.string
     end
 
-    def execute_interactive(cmd)
+    def execute_interactive(cmd, raise: false)
       system cmd
       unless $?.success?
-        raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
+        if raise
+          raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
+        else
+          exit $?.exitstatus
+        end
       end
     end
 
