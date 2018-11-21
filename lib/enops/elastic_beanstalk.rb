@@ -172,20 +172,12 @@ module Enops
             environment_name: environment_name,
           }
 
-          unless value.nil?
-            env_type_updates[env_type][:option_settings] ||= []
-            env_type_updates[env_type][:option_settings] << Aws::ElasticBeanstalk::Types::ConfigurationOptionSetting.new(
-              namespace: CONFIG_VAR_NAMESPACE,
-              option_name: key,
-              value: value,
-            )
-          else
-            env_type_updates[env_type][:options_to_remove] ||= []
-            env_type_updates[env_type][:options_to_remove] << Aws::ElasticBeanstalk::Types::OptionSpecification.new(
-              namespace: CONFIG_VAR_NAMESPACE,
-              option_name: key,
-            )
-          end
+          add_option_setting(
+            env_type_updates[env_type],
+            namespace: CONFIG_VAR_NAMESPACE,
+            option_name: key,
+            value: value,
+          )
         end
       end
 
@@ -246,8 +238,8 @@ module Enops
             raise UserMessageError, "Unknown scaling option: #{key}"
           end
 
-          env_type_updates[env_type][:option_settings] ||= []
-          env_type_updates[env_type][:option_settings] << Aws::ElasticBeanstalk::Types::ConfigurationOptionSetting.new(
+          add_option_setting(
+            env_type_updates[env_type],
             namespace: namespace,
             option_name: name,
             value: value.to_s,
@@ -359,8 +351,8 @@ module Enops
           version_label: version_label,
         }
 
-        params[:option_settings] ||= []
-        params[:option_settings] << Aws::ElasticBeanstalk::Types::ConfigurationOptionSetting.new(
+        add_option_setting(
+          params,
           namespace: 'aws:elasticbeanstalk:command',
           option_name: 'DeploymentPolicy',
           value: immutable ? 'Immutable' : 'AllAtOnce',
@@ -476,6 +468,23 @@ module Enops
         result[setting.option_name] = setting.value
       end
       result
+    end
+
+    def add_option_setting(update_params, namespace:, option_name:, value:)
+      unless value.nil?
+        update_params[:option_settings] ||= []
+        update_params[:option_settings] << Aws::ElasticBeanstalk::Types::ConfigurationOptionSetting.new(
+          namespace: namespace,
+          option_name: option_name,
+          value: value,
+        )
+      else
+        update_params[:options_to_remove] ||= []
+        update_params[:options_to_remove] << Aws::ElasticBeanstalk::Types::OptionSpecification.new(
+          namespace: namespace,
+          option_name: option_name,
+        )
+      end
     end
 
     def find_instance(filter)
