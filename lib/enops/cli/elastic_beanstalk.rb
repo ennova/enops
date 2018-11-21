@@ -394,6 +394,7 @@ module Enops::CLI::ElasticBeanstalk
   class DeployCommand < AppCommand
     option '--force-version', :flag, 'force deployment of non-ref (ref-*) or release (v*) version label'
     option '--immutable', :flag, 'provision new EC2 instances instead of updating existing EC2 instances'
+    option '--maintenance', :flag, 'enter maintenance mode for the duration of the deploy'
 
     parameter 'VERSION', 'version of application to deploy (version label or git ref)'
 
@@ -416,11 +417,24 @@ module Enops::CLI::ElasticBeanstalk
         end
       end
 
+      if maintenance?
+        waitable do
+          api.set_config_vars app_name, 'MAINTENANCE' => '1'
+        end
+      end
+
       waitable do
+        config_vars = {}
+
+        if maintenance?
+          config_vars['MAINTENANCE'] = nil
+        end
+
         api.start_deploy(
           app_name: app_name,
           version_label: version_label,
           immutable: immutable?,
+          config_vars: config_vars,
         )
       end
     end
