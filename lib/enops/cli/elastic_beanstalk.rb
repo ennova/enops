@@ -311,6 +311,18 @@ module Enops::CLI::ElasticBeanstalk
     end
   end
 
+  class RunPsqlCommand < AppCommand
+    parameter '[ARGS] ...', 'arguments to psql', default: %w[]
+
+    def cmd_list
+      %w[psql] + args_list
+    end
+
+    def execute
+      api.run_pg_cmd! app_name, cmd_list.map(&Shellwords.method(:escape)).join(' ')
+    end
+  end
+
   class RestorePostgresCommand < AppCommand
     parameter 'BACKUP_URL', 'URL to database backup to restore'
 
@@ -430,6 +442,7 @@ module Enops::CLI::ElasticBeanstalk
     subcommand 'config', 'show current configuration environment variables', GetConfigCommand
     subcommand 'config:set', 'update configuration environment variables', SetConfigCommand
     subcommand 'pg', 'PostgreSQL tools', PostgresCommand
+    subcommand 'psql', '', RunPsqlCommand
     subcommand 'run', 'run application command (e.g. console)', RunAppCommand
     subcommand 'ssh', 'SSH to an application EC2 instance (for debugging)', RunInstanceSSHCommand
     subcommand 'tail', 'tail the application log', TailAppLogCommand
