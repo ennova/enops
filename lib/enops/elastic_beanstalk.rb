@@ -281,10 +281,7 @@ module Enops
 
     def run_pg_cmd!(app_name, cmd)
       with_pg_env app_name do
-        system cmd
-        unless $?.success?
-          raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
-        end
+        Enops::Utils.execute_interactive cmd
       end
     end
 
@@ -292,10 +289,7 @@ module Enops
       instances = get_instances(app_name)
       instance_id = instances.fetch('worker', []).sample || instances.values.flatten.sample
 
-      system instance_docker_run_cmd(instance_id, cmd)
-      unless $?.success?
-        raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
-      end
+      Enops::Utils.execute_interactive instance_docker_run_cmd(instance_id, cmd)
     end
 
     def pg_restore!(app_name, backup_url)
@@ -314,10 +308,7 @@ module Enops
 
     def run_instance_ssh!(app_name, env_type:, cmd: nil)
       instance_id = get_instances(app_name).fetch(env_type).sample
-      system "#{instance_ssh_cmd(instance_id)} #{Shellwords.escape cmd}"
-      unless $?.success?
-        raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
-      end
+      Enops::Utils.execute_interactive "#{instance_ssh_cmd(instance_id)} #{Shellwords.escape cmd}"
     end
 
     def tail_app_log!(app_name, env_type: nil)

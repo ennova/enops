@@ -53,6 +53,13 @@ module Enops
       output_io.string
     end
 
+    def execute_interactive(cmd)
+      system cmd
+      unless $?.success?
+        raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
+      end
+    end
+
     private
 
     def log_io_lines(src:, dst:, quiet:)
