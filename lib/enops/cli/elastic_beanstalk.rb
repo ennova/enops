@@ -419,6 +419,8 @@ module Enops::CLI::ElasticBeanstalk
 
       if maintenance?
         waitable do
+          puts "#{Time.now} #{app_name} Entering maintenance mode..."
+
           api.set_config_vars app_name, 'MAINTENANCE' => '1'
         end
       end
@@ -427,6 +429,8 @@ module Enops::CLI::ElasticBeanstalk
         config_vars = {}
 
         if maintenance?
+          puts "#{Time.now} #{app_name} Deploying application..."
+
           config_vars['MAINTENANCE'] = nil
         end
 
