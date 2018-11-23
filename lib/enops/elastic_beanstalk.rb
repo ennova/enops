@@ -731,7 +731,6 @@ module Enops
             ContainerPort: '3000'
           },
         ],
-        Logging: '/app/log',
       }
 
       JSON.pretty_generate(data)
