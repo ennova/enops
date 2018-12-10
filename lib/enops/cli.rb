@@ -1,5 +1,7 @@
 require 'clamp'
 
+STDOUT.sync = true
+
 module Enops
   module CLI
     class MainCommand < Clamp::Command

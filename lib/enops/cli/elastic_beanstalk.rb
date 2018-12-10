@@ -1,8 +1,6 @@
 require 'tty-table'
 require 'active_support/inflector'
 
-STDOUT.sync = true
-
 module Enops::CLI::ElasticBeanstalk
   module ErrorHandling
     def execute
