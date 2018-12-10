@@ -12,7 +12,7 @@ module Enops
     module ErrorHandling
       def execute
         super
-      rescue Enops::UserMessageError, Enops::ExecuteError, Aws::Errors::ServiceError, Aws::Errors::MissingCredentialsError, Aws::Errors::InvalidProcessCredentialsPayload, Aws::Errors::MissingRegionError => e
+      rescue Enops::UserMessageError, Enops::ExecuteError, ::Aws::Errors::ServiceError, ::Aws::Errors::MissingCredentialsError, ::Aws::Errors::InvalidProcessCredentialsPayload, ::Aws::Errors::MissingRegionError => e
         $stderr.puts "#{e.message}"
         exit 1
       end
@@ -49,4 +49,5 @@ end
 
 Clamp.allow_options_after_parameters = true
 
+require 'enops/cli/aws'
 require 'enops/cli/elastic_beanstalk'
