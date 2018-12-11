@@ -83,6 +83,11 @@ module Enops::CLI::Aws
     def ensure_aws_child_profiles
       accounts = get_child_accounts('ennova-mfa')
 
+      if accounts.empty?
+        STDERR.puts 'Expected to find at least one child AWS account.'
+        exit 1
+      end
+
       accounts.each do |account|
         profile_name = account.fetch('Name').parameterize(separator: '-')
         role_arn = "arn:aws:iam::#{account.fetch('Id')}:role/OrganizationAccountAccessRole"
