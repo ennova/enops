@@ -3,6 +3,18 @@ require 'aws-sdk-core'
 
 module Enops::CLI::Aws
   class Command < Enops::CLI::Command
+    private
+
+    def cmd(*args)
+      system(*args)
+      exit $?.exitstatus unless $?.success?
+    end
+
+    def cmd_json(cmd, nil_on_error: false)
+      json = `#{cmd}`
+      return nil if nil_on_error && !$?.success?
+      JSON.parse(json)
+    end
   end
 
   class ConfigureCommand < Command
@@ -102,17 +114,6 @@ module Enops::CLI::Aws
     end
 
     private
-
-    def cmd(*args)
-      system(*args)
-      exit $?.exitstatus unless $?.success?
-    end
-
-    def cmd_json(cmd, nil_on_error: false)
-      json = `#{cmd}`
-      return nil if nil_on_error && !$?.success?
-      JSON.parse(json)
-    end
 
     def aws_cli_version
       result = `aws --version 2>&1`.chomp
