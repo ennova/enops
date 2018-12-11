@@ -243,10 +243,47 @@ module Enops::CLI::Aws
     end
   end
 
+  class ConsoleCommand < Command
+    def execute
+      puts "Sign-in:"
+      puts "  #{master_signin_url}"
+      child_accounts.each do |account|
+        puts "#{account.fetch('Name')}:"
+        puts "  #{account_switchrole_url(account)}"
+      end
+    end
+
+    private
+
+    def master_aliases
+      @master_aliases ||= get_account_aliases('ennova-mfa')
+    end
+
+    def master_signin_url
+      "https://#{master_aliases.first}.signin.aws.amazon.com/console"
+    end
+
+    def child_accounts
+      @child_accounts ||= get_child_accounts('ennova-mfa')
+    end
+
+    def account_switchrole_url(account)
+      params = {
+        displayName: account.fetch('Name'),
+        account: account.fetch('Id'),
+        roleName: 'OrganizationAccountAccessRole',
+        color: account.fetch('Name').end_with?(' Staging') ? 'B7CA9D' : 'F2B0A9',
+      }
+
+      "https://signin.aws.amazon.com/switchrole?#{URI.encode_www_form params}"
+    end
+  end
+
   class MainCommand < Clamp::Command
     subcommand 'configure', 'configure AWS CLI', ConfigureCommand
     subcommand 'env', 'output AWS CLI credentials', EnvCommand
     subcommand 'exec', 'execute command with AWS CLI credentials', ExecCommand
+    subcommand 'console', 'output URLs for the AWS Management Console website', ConsoleCommand
   end
 
   Enops::CLI::MainCommand.subcommand 'aws', 'AWS CLI helpers', MainCommand
