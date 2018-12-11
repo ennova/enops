@@ -15,6 +15,34 @@ module Enops::CLI::Aws
       return nil if nil_on_error && !$?.success?
       JSON.parse(json)
     end
+
+    def get_caller_identity(profile_name, nil_on_error: false)
+      cmd_json "aws sts get-caller-identity --profile #{Shellwords.escape profile_name}", nil_on_error: nil_on_error
+    end
+
+    def extract_identity_username(identity)
+      unless identity.fetch('Arn') =~ %r{:user/([\w.-]+)$}
+        STDERR.puts "Expected user ARN: #{identity.fetch('Arn')}"
+        exit 1
+      end
+      $1
+    end
+
+    def get_account_aliases(profile_name)
+      cmd_json("aws iam list-account-aliases --profile #{Shellwords.escape profile_name}").fetch('AccountAliases')
+    end
+
+    def get_accounts(profile_name)
+      accounts = cmd_json("aws organizations list-accounts --profile #{Shellwords.escape profile_name}").fetch('Accounts')
+      accounts.sort_by { |account| account.fetch('JoinedTimestamp') }
+    end
+
+    def get_child_accounts(profile_name)
+      identity = get_caller_identity(profile_name)
+      accounts = get_accounts(profile_name)
+
+      accounts.reject { |account| account.fetch('Id') == identity.fetch('Account') }
+    end
   end
 
   class ConfigureCommand < Command
@@ -141,34 +169,6 @@ module Enops::CLI::Aws
       Aws::SharedCredentials.new(profile_name: profile_name).set?
     rescue Aws::Errors::NoSuchProfileError
       false
-    end
-
-    def get_caller_identity(profile_name, nil_on_error: false)
-      cmd_json "aws sts get-caller-identity --profile #{Shellwords.escape profile_name}", nil_on_error: nil_on_error
-    end
-
-    def extract_identity_username(identity)
-      unless identity.fetch('Arn') =~ %r{:user/([\w.-]+)$}
-        STDERR.puts "Expected user ARN: #{identity.fetch('Arn')}"
-        exit 1
-      end
-      $1
-    end
-
-    def get_account_aliases(profile_name)
-      cmd_json("aws iam list-account-aliases --profile #{Shellwords.escape profile_name}").fetch('AccountAliases')
-    end
-
-    def get_accounts(profile_name)
-      accounts = cmd_json("aws organizations list-accounts --profile #{Shellwords.escape profile_name}").fetch('Accounts')
-      accounts.sort_by { |account| account.fetch('JoinedTimestamp') }
-    end
-
-    def get_child_accounts(profile_name)
-      identity = get_caller_identity(profile_name)
-      accounts = get_accounts(profile_name)
-
-      accounts.reject { |account| account.fetch('Id') == identity.fetch('Account') }
     end
 
     def credential_process_path
