@@ -51,3 +51,4 @@ Clamp.allow_options_after_parameters = true
 
 require 'enops/cli/aws'
 require 'enops/cli/elastic_beanstalk'
+require 'enops/cli/setup'
