@@ -202,8 +202,44 @@ module Enops::CLI::Aws
     end
   end
 
+  class EnvCommand < Command
+    def execute
+      credentials_env.each do |key, value|
+        puts "export #{key}=#{Shellwords.escape value}"
+      end
+    end
+
+    private
+
+    def credentials
+      @credentials ||= Enops::AwsAuth.default_credentials
+    end
+
+    def credentials_env
+      {
+        'AWS_ACCESS_KEY_ID' => credentials.access_key_id,
+        'AWS_SECRET_ACCESS_KEY' => credentials.secret_access_key,
+        'AWS_SESSION_TOKEN' => credentials.session_token,
+      }
+    end
+  end
+
+  class ExecCommand < EnvCommand
+    parameter 'CMD ...', 'application command to run (e.g. "terraform")'
+
+    def cmd
+      cmd_list.map(&Shellwords.method(:escape)).join(' ').presence
+    end
+
+    def execute
+      exec credentials_env, cmd
+    end
+  end
+
   class MainCommand < Clamp::Command
     subcommand 'configure', 'configure AWS CLI', ConfigureCommand
+    subcommand 'env', 'output AWS CLI credentials', EnvCommand
+    subcommand 'exec', 'execute command with AWS CLI credentials', ExecCommand
   end
 
   Enops::CLI::MainCommand.subcommand 'aws', 'AWS CLI helpers', MainCommand
