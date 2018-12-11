@@ -9,6 +9,7 @@ module Enops::CLI::Aws
     option '--force', :flag, 'force reconfiguration of AWS CLI'
 
     def execute
+      ENV.delete 'AWS_PROFILE'
       ensure_aws_cli_installed
       ensure_aws_cli_version
       ensure_aws_master_profile
