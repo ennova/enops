@@ -19,8 +19,12 @@ module Enops
       end
     end
 
-    def cli_credentials
-      Aws::ProcessCredentials.new("#{Shellwords.escape cli_python_bin_path} #{Shellwords.escape cli_credentials_helper_script}").credentials
+    def cli_credentials(profile_name: nil)
+      cmd = "#{Shellwords.escape cli_python_bin_path} #{Shellwords.escape cli_credentials_helper_script}"
+      if profile_name
+        cmd = "AWS_PROFILE=#{Shellwords.escape profile_name} #{cmd}"
+      end
+      Aws::ProcessCredentials.new(cmd).credentials
     end
 
     def cli_bin_path
