@@ -8,7 +8,10 @@ session = botocore.session.get_session()
 
 if hasattr(botocore.credentials, 'JSONFileCache'):
     cli_cache = os.path.join(os.path.expanduser('~'), '.aws/cli/cache')
-    session.get_component('credential_provider').get_provider('assume-role').cache = botocore.credentials.JSONFileCache(cli_cache)
+    try:
+        session.get_component('credential_provider').get_provider('assume-role').cache = botocore.credentials.JSONFileCache(cli_cache)
+    except botocore.exceptions.ProfileNotFound as e:
+        sys.exit(e)
 else:
     # workaround old awscli without https://github.com/boto/botocore/pull/1157
     from awscli.customizations.assumerole import inject_assume_role_provider_cache
