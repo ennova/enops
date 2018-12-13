@@ -9,6 +9,10 @@ module Enops
       env_credentials || cli_credentials
     end
 
+    def default_region
+      env_region || cli_region || env_region_default
+    end
+
     def env_credentials
       if ENV.key?('AWS_ACCESS_KEY_ID')
         Aws::Credentials.new(
@@ -19,12 +23,24 @@ module Enops
       end
     end
 
+    def env_region
+      ENV.fetch('AWS_REGION', nil)
+    end
+
+    def env_region_default
+      ENV.fetch('AWS_DEFAULT_REGION', nil)
+    end
+
     def cli_credentials(profile_name: nil)
       cmd = "#{Shellwords.escape cli_python_bin_path} #{Shellwords.escape cli_credentials_helper_script}"
       if profile_name
         cmd = "AWS_PROFILE=#{Shellwords.escape profile_name} #{cmd}"
       end
       Aws::ProcessCredentials.new(cmd).credentials
+    end
+
+    def cli_region(profile_name: nil)
+      Aws.shared_config.region(profile: profile_name)
     end
 
     def cli_bin_path
