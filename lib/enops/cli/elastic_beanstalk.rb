@@ -12,6 +12,31 @@ module Enops::CLI::ElasticBeanstalk
   class AppCommand < Command
     option '--app', 'NAME', 'application to run command against', attribute_name: :app_name, required: true, environment_variable: 'ENOPS_APP_NAME'
 
+    def api
+      @api ||= begin
+        profile_name = if !ENV.key?('AWS_PROFILE') && !ENV.key?('AWS_ACCESS_KEY_ID')
+          profile_name = case app_name
+          when /^e7-/
+            'ennova-tf-production'
+          when /^e7stg-/
+            'ennova-tf-staging'
+          end
+        end
+
+        if profile_name
+          credentials = Enops::AwsAuth.cli_credentials(profile_name: profile_name)
+          region = Enops::AwsAuth.cli_region(profile_name: profile_name)
+
+          Enops::ElasticBeanstalk.new(
+            credentials: credentials,
+            region: region,
+          )
+        else
+          super
+        end
+      end
+    end
+
     def output_events(events)
       events.each do |event|
         puts "#{event.event_date.localtime} #{event.environment_name} #{event.severity} #{event.message}"
