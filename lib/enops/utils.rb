@@ -7,10 +7,10 @@ module Enops
   class ExecuteError < StandardError
     attr_reader :cmd, :status, :output
 
-    def initialize(options = {})
-      @cmd = options.fetch(:cmd)
-      @status = options.fetch(:status)
-      @output = options.fetch(:output)
+    def initialize(cmd:, status:, output:)
+      @cmd = cmd
+      @status = status
+      @output = output
 
       super "#{cmd.inspect} failed with exit status #{status.exitstatus}"
     end
@@ -23,30 +23,25 @@ module Enops
       caller[1][/`([^']*)'$/, 1]
     end
 
-    def with_retry(options = {})
-      options = {tries: 1, caller_label: caller_label}.merge(options)
-      retryable_options = options.except(:caller_label)
-
-      Retryable.retryable(retryable_options) do |try_num|
-        Enops.logger.warn "Retrying #{options[:caller_label]} (try #{try_num+1} of #{retryable_options[:tries]})" if try_num > 0
+    def with_retry(tries:, sleep:, on: StandardError, caller_label: self.caller_label)
+      Retryable.retryable(tries: tries, sleep: sleep, on: on) do |try_num|
+        Enops.logger.warn "Retrying #{caller_label} (try #{try_num+1} of #{tries})" if try_num > 0
         yield
       end
     end
 
-    def execute(cmd, options = {}, &block)
-      options = {pty: true, quiet: false}.merge(options)
-
+    def execute(cmd, pty: true, quiet: false, &block)
       output_io = StringIO.new
 
-      status = if options.fetch(:pty)
+      status = if pty
         PTY.spawn "(#{cmd}) 2>&1" do |r, w, pid|
-          log_io_lines(r, output_io, options.fetch(:quiet), &block)
+          log_io_lines(src: r, dst: output_io, quiet: quiet, &block)
           Process.wait(pid)
         end
         $?
       else
         Open3.popen2 "(#{cmd}) 2>&1" do |stdin, stdout, wait_thread|
-          log_io_lines(stdout, output_io, options.fetch(:quiet), &block)
+          log_io_lines(src: stdout, dst: output_io, quiet: quiet, &block)
           wait_thread.value
         end
       end
@@ -58,9 +53,30 @@ module Enops
       output_io.string
     end
 
+    def execute_interactive(cmd, raise: false)
+      org_trap_int = trap('INT') { }
+
+      system cmd
+
+      if $?.termsig == Signal.list.fetch('INT')
+        trap 'INT', org_trap_int
+        Process.kill $?.termsig, 0
+      end
+
+      unless $?.success?
+        if raise
+          raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
+        else
+          exit $?.exitstatus
+        end
+      end
+    ensure
+      trap 'INT', org_trap_int
+    end
+
     private
 
-    def log_io_lines(src, dst, quiet)
+    def log_io_lines(src:, dst:, quiet:)
       begin
         loop do
           line = src.readline

@@ -1,0 +1,19 @@
+--- /opt/elasticbeanstalk/hooks/common.sh.org
++++ /opt/elasticbeanstalk/hooks/common.sh
+@@ -70,13 +70,14 @@
+     if [ "$EB_CONFIG_PROXY_SERVER" = "nginx" ]; then
+         # set up nginx
+         cat > /etc/nginx/conf.d/elasticbeanstalk-nginx-docker-upstream.conf <<EOF
+ upstream docker {
+-    server $EB_CONFIG_UPSTREAM_IP:$EB_CONFIG_UPSTREAM_PORT;
++    server $EB_CONFIG_UPSTREAM_IP:$EB_CONFIG_UPSTREAM_PORT fail_timeout=1s;
+     keepalive 256;
++    server 127.0.0.1:8501 backup;
+ }
+ EOF
+-        service nginx restart || error_exit "Failed to start nginx, abort deployment" 1
++        service nginx reload || service nginx restart || error_exit "Failed to start nginx, abort deployment" 1
+     elif [ "$EB_CONFIG_PROXY_SERVER" = "none" ]; then
+         # update iptable rules to point to the staged container
+         iptables -A FORWARD -i eth0 -o docker0 -j ACCEPT -m comment --comment added_by_elasticbeanstalk_forward # needed since Docker > 1.12 where default policy of FORWARD is now DROP
+         iptables -A PREROUTING -t nat -i eth0 -p tcp --dport $EB_CONFIG_HTTP_PORT -j DNAT --to $EB_CONFIG_UPSTREAM_IP:$EB_CONFIG_UPSTREAM_PORT -m comment --comment added_by_elasticbeanstalk
