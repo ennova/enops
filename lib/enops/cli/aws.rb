@@ -130,7 +130,7 @@ module Enops::CLI::Aws
       end
 
       accounts.each do |account|
-        profile_name = account.fetch('Name').parameterize(separator: '-')
+        profile_name = account.fetch('Name').parameterize
         role_arn = "arn:aws:iam::#{account.fetch('Id')}:role/OrganizationAccountAccessRole"
 
         credentials_process_cmd = "#{Shellwords.escape credential_process_path} assume-role ennova-mfa #{Shellwords.escape role_arn}"
