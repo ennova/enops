@@ -333,6 +333,12 @@ module Enops::CLI::ElasticBeanstalk
     end
   end
 
+  class RunConsoleCommand < AppCommand
+    def execute
+      api.run_app_cmd! app_name, 'console'
+    end
+  end
+
   class RunInstanceSSHCommand < AppCommand
     parameter '[CMD] ...', 'command to run'
     option '--env-type', 'ENV_TYPE', 'environment to select EC2 instance from', default: 'web'
@@ -450,6 +456,7 @@ module Enops::CLI::ElasticBeanstalk
     subcommand 'pg', 'PostgreSQL tools', PostgresCommand
     subcommand 'psql', '', RunPsqlCommand
     subcommand 'run', 'run application command (e.g. console)', RunAppCommand
+    subcommand 'console', '', RunConsoleCommand
     subcommand 'ssh', 'SSH to an application EC2 instance (for debugging)', RunInstanceSSHCommand
     subcommand 'tail', 'tail the application log', TailAppLogCommand
     subcommand 'versions', 'list available application versions', AvailableVersionsCommand
