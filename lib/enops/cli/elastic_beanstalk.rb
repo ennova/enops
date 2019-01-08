@@ -9,7 +9,7 @@ module Enops::CLI::ElasticBeanstalk
     end
 
     def git_ref_to_sha(ref)
-      output = `git rev-parse --verify #{Shellwords.escape version} 2> /dev/null`.chomp
+      output = `git rev-parse --verify #{Shellwords.escape "#{version}^{}"} 2> /dev/null`.chomp
       if $?.success?
         raise "Unexpected response from git: #{output.inspect}" unless output.size == 40
         output
