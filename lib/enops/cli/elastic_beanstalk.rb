@@ -7,6 +7,14 @@ module Enops::CLI::ElasticBeanstalk
     def api
       @api ||= Enops::ElasticBeanstalk.new
     end
+
+    def git_ref_to_sha(ref)
+      output = `git rev-parse --verify #{Shellwords.escape version} 2> /dev/null`.chomp
+      if $?.success?
+        raise "Unexpected response from git: #{output.inspect}" unless output.size == 40
+        output
+      end
+    end
   end
 
   class AppCommand < Command
@@ -394,9 +402,7 @@ module Enops::CLI::ElasticBeanstalk
 
     def version_label
       @version_label ||= begin
-        git_sha = `git rev-parse --verify #{Shellwords.escape version} 2> /dev/null`.chomp
-        if $?.success?
-          raise unless git_sha.size == 40
+        if git_sha = git_ref_to_sha(version)
           "ref-#{git_sha}"
         else
           version
