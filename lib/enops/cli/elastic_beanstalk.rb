@@ -32,6 +32,13 @@ module Enops::CLI::ElasticBeanstalk
 
       version_label
     end
+
+    def format_env_status_summary(env_status)
+      <<-EOF.squish
+        #{env_status.fetch(:status)}
+        (health: #{env_status.fetch(:health_status)} (#{env_status.fetch(:health)}))
+      EOF
+    end
   end
 
   class AppCommand < Command
@@ -94,8 +101,7 @@ module Enops::CLI::ElasticBeanstalk
           if should_output_status
             puts <<-EOF.squish
               #{Time.now} #{app_name}-#{env_type}
-              STATUS #{env_status.fetch(:status)}
-              (health: #{env_status.fetch(:health_status)} (#{env_status.fetch(:health)}))
+              STATUS #{format_env_status_summary env_status}
             EOF
             last_activity = Time.now
           end
