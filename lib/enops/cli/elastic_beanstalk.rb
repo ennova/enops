@@ -15,6 +15,23 @@ module Enops::CLI::ElasticBeanstalk
         output
       end
     end
+
+    def git_sha_to_tag(git_sha)
+      output = `git describe --tags --match 'v*' #{Shellwords.escape git_sha} 2> /dev/null`.chomp
+      if $?.success?
+        output
+      end
+    end
+
+    def annotate_version_label(version_label)
+      if version_label =~ /^ref-(.+)$/
+        if tag = git_sha_to_tag($1)
+          version_label = "#{version_label} (#{tag})"
+        end
+      end
+
+      version_label
+    end
   end
 
   class AppCommand < Command
@@ -108,7 +125,7 @@ module Enops::CLI::ElasticBeanstalk
       rows = cached_api.app_versions.map do |app_name, version_label|
         row = {
           app_name: app_name,
-          version_label: version_label,
+          version_label: annotate_version_label(version_label),
         }
 
         cached_api.get_status(app_name).each do |env_type, env_status|
@@ -134,6 +151,7 @@ module Enops::CLI::ElasticBeanstalk
     def execute
       env_statuses = api.get_status(app_name)
       rows = env_statuses.map { |env_type, status| {env_type: env_type}.merge(status) }
+      rows = rows.map { |row| row.merge(version_label: annotate_version_label(row.fetch(:version_label))) }
       table rows: rows, key_labels: {env_type: 'Environment'}
     end
   end
