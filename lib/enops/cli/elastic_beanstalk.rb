@@ -156,8 +156,11 @@ module Enops::CLI::ElasticBeanstalk
   class StatusCommand < AppCommand
     def execute
       env_statuses = api.get_status(app_name)
-      rows = env_statuses.map { |env_type, status| {env_type: env_type}.merge(status) }
-      rows = rows.map { |row| row.merge(version_label: annotate_version_label(row.fetch(:version_label))) }
+      rows = env_statuses.map do |env_type, status|
+        version_label = annotate_version_label(status.fetch(:version_label))
+        formatted_status = format_env_status_summary(status)
+        {env_type: env_type, status: formatted_status, version_label: version_label}.merge(status.except(:status, :health, :health_status))
+      end
       table rows: rows, key_labels: {env_type: 'Environment'}
     end
   end
