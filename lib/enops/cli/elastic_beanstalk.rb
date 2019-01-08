@@ -10,7 +10,7 @@ module Enops::CLI::ElasticBeanstalk
   end
 
   class AppCommand < Command
-    option '--app', 'NAME', 'application to run command against', attribute_name: :app_name, required: true, environment_variable: 'ENOPS_APP_NAME'
+    option %w[--app -a], 'NAME', 'application to run command against', attribute_name: :app_name, required: true, environment_variable: 'ENOPS_APP_NAME'
 
     def api
       @api ||= begin
