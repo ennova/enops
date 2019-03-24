@@ -151,10 +151,14 @@ module Enops
       end.to_h
     end
 
-    def set_config_vars(app_name, config_vars)
+    def set_config_vars(app_name, config_vars, env_types: nil)
       envs = app_environments.fetch(app_name).map do |env_type, environment|
         [env_type, environment.environment_name]
       end.to_h
+
+      if env_types
+        envs = envs.slice(*env_types)
+      end
 
       env_type_updates = {}
 
