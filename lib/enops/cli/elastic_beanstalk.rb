@@ -159,7 +159,7 @@ module Enops::CLI::ElasticBeanstalk
       rows = env_statuses.map do |env_type, status|
         version_label = annotate_version_label(status.fetch(:version_label))
         formatted_status = format_env_status_summary(status)
-        {env_type: env_type, status: formatted_status, version_label: version_label}.merge(status.except(:status, :health, :health_status))
+        {env_type: env_type, status: formatted_status, version_label: version_label}.merge(status.except(:status, :health, :health_status, :version_label))
       end
       table rows: rows, key_labels: {env_type: 'Environment'}
     end
