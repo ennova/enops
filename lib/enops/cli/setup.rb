@@ -15,12 +15,13 @@ module Enops::CLI::Setup
         eval $("$SHELL" -l -c "
           cd #{Shellwords.escape Dir.pwd} &&
           ruby -rbundler/setup -rshellwords -rrbconfig -e \\"puts \\\\\\"
-            ENOPS_RUBYLIB=\#{Shellwords.escape \\\\\\$:.join(':')}
-            ENOPS_RUBY=\#{Shellwords.escape RbConfig.ruby}
+            export PATH=\#{Shellwords.escape ENV.fetch('PATH')}
+            export BUNDLE_GEMFILE=\#{Shellwords.escape Bundler.default_gemfile.to_s}
             ENOPS_BIN=\#{Shellwords.escape Gem.bin_path('enops', 'enops')}
           \\\\\\"\\"
         ")
-        exec "$ENOPS_RUBY" -I"$ENOPS_RUBYLIB" "$ENOPS_BIN" "$@"
+
+        exec ruby "$ENOPS_BIN" "$@"
       SH
       FileUtils.chmod '+x', script_path
 
