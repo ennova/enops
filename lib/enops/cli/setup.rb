@@ -21,7 +21,7 @@ module Enops::CLI::Setup
           \\\\\\"\\"
         ")
 
-        exec ruby "$ENOPS_BIN" "$@"
+        exec ruby "${ENOPS_BIN?}" "$@"
       SH
       FileUtils.chmod '+x', script_path
 
