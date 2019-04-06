@@ -1,7 +1,12 @@
 module Enops::CLI::Setup
   class MainCommand < Enops::CLI::Command
     def execute
-      install_bin_stub
+      if File.exists?('bin/enops')
+        install_bin_stub
+      else
+        puts 'Enops setup running outside project directory. Skipping installation of bin stub.'
+      end
+
       Enops::CLI::Aws::ConfigureCommand.new(nil).execute
     end
 
