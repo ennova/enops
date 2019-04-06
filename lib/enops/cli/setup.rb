@@ -12,14 +12,23 @@ module Enops::CLI::Setup
       script_path = "#{bin_dir}/enops"
       File.write script_path, <<~SH
         #!/bin/bash -e
-        eval $("$SHELL" -l -c "
-          cd #{Shellwords.escape Dir.pwd} &&
-          ruby -rbundler/setup -rshellwords -rrbconfig -e \\"puts \\\\\\"
-            export PATH=\#{Shellwords.escape ENV.fetch('PATH')}
-            export BUNDLE_GEMFILE=\#{Shellwords.escape Bundler.default_gemfile.to_s}
-            ENOPS_BIN=\#{Shellwords.escape Gem.bin_path('enops', 'enops')}
-          \\\\\\"\\"
-        ")
+
+        ENV_FILE="$(mktemp -t enops-env.XXXXXX)"
+        trap '{ rm -f "${ENV_FILE?}"; }' EXIT
+
+        (
+          "$SHELL" -l -c "
+            cd #{Shellwords.escape Dir.pwd} &&
+            ruby -rbundler/setup -rshellwords -rrbconfig -e \\"puts \\\\\\"
+              export PATH=\#{Shellwords.escape ENV.fetch('PATH')}
+              export BUNDLE_GEMFILE=\#{Shellwords.escape Bundler.default_gemfile.to_s}
+              ENOPS_BIN=\#{Shellwords.escape Gem.bin_path('enops', 'enops')}
+            \\\\\\"\\"
+          "
+        ) > "${ENV_FILE?}"
+
+        source "${ENV_FILE}"
+        rm "${ENV_FILE?}"
 
         exec ruby "${ENOPS_BIN?}" "$@"
       SH
