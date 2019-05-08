@@ -152,6 +152,20 @@ module Enops
       format_formation_response(formation)
     end
 
+    def get_feature_enabled(app_name, feature_name)
+      result = client.app_feature.info(app_name, feature_name)
+      result.fetch('enabled')
+    end
+
+    def set_feature_enabled(app_name, feature_name, enabled)
+      result = client.app_feature.update app_name, feature_name, enabled: enabled
+      new_enabled = result.fetch('enabled')
+      unless new_enabled == enabled
+        raise "Expected enabled to be #{enabled.inspect} but is #{result.fetch('enabled').inspect}"
+      end
+      new_enabled
+    end
+
     def postgresql_addon_attachments(app_name)
       with_retry do
         with_client_headers 'Accept-Inclusion' => 'addon:plan,config_vars' do
