@@ -279,11 +279,40 @@ module Enops::CLI::Aws
     end
   end
 
+  class S3SyncCommand < Command
+    parameter 'SOURCE_BUCKET', 'S3 bucket to copy objects from'
+    parameter 'DEST_BUCKET', 'S3 bucket to copy objects to'
+    option '--source-profile', 'AWS_PROFILE', 'AWS profile to use for reading from the source bucket'
+    option '--dest-profile', 'AWS_PROFILE', 'AWS profile to use for writing to the source bucket'
+    option '--source-region', 'AWS_REGION', 'AWS region of the source bucket (defaults to profile region)'
+    option '--dest-region', 'AWS_REGION', 'AWS region of the destination bucket (defaults to profile region)'
+    option '--only-missing', :flag, 'skip keys which already exist in the destination (note: may not be safe if previous sync was interrupted)'
+
+    def execute
+      require 'enops/aws_s3'
+
+      Enops::AwsS3::Sync.new(
+        source_profile_name: source_profile,
+        source_bucket_name: source_bucket,
+        source_bucket_region: source_region,
+        dest_profile_name: dest_profile,
+        dest_bucket_name: dest_bucket,
+        dest_bucket_region: dest_region,
+        only_missing: only_missing?,
+      ).sync!
+    end
+  end
+
+  class S3Command < Clamp::Command
+    subcommand 'sync', 'copy missing objects from one S3 bucket into another', S3SyncCommand
+  end
+
   class MainCommand < Clamp::Command
     subcommand 'configure', 'configure AWS CLI', ConfigureCommand
     subcommand 'env', 'output AWS CLI credentials', EnvCommand
     subcommand 'exec', 'execute command with AWS CLI credentials', ExecCommand
     subcommand 'console', 'output URLs for the AWS Management Console website', ConsoleCommand
+    subcommand 's3', 'S3 tools', S3Command
   end
 
   Enops::CLI::MainCommand.subcommand 'aws', 'AWS CLI helpers', MainCommand

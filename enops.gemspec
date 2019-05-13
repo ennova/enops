@@ -36,4 +36,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rubyzip', '~> 1.2'
   spec.add_dependency 'clamp', '~> 1.3'
   spec.add_dependency 'tty-table', '~> 0.8'
+  spec.add_dependency 'ruby-progressbar'
+  spec.add_dependency 'parallel'
 end
