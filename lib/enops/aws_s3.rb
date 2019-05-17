@@ -1,5 +1,6 @@
 require 'enops/aws_auth'
 require 'aws-sdk-s3'
+require 'aws-sdk-cloudwatch'
 require 'parallel'
 require 'ruby-progressbar'
 require 'active_support/core_ext/object/deep_dup'
@@ -63,12 +64,32 @@ module Enops
       end
 
       def get_bucket_keys(type)
-        with_progress_bar total: nil, title: "Fetching #{type} keys" do |bar|
+        puts "Fetching #{type} keys..."
+
+        statistics = cloudwatch_client_for(type).get_metric_statistics(
+          namespace: 'AWS/S3',
+          metric_name: 'NumberOfObjects',
+          dimensions: [
+            {name: 'BucketName', value: bucket_name_for(type)},
+            {name: 'StorageType', value: 'AllStorageTypes'},
+          ],
+          statistics: %w[Maximum],
+          start_time: Time.now - 86400 * 7,
+          end_time: Time.now,
+          period: 86400,
+        )
+        total = statistics.datapoints.sort_by(&:timestamp).last&.maximum
+        total = Integer(total) if total
+
+        with_progress_bar total: total, title: nil do |bar|
           keys = []
           page = s3_client_for(type).list_objects_v2(bucket: bucket_name_for(type), max_keys: 1000)
           loop do
             keys += page.contents.map(&:key)
-            bar.progress += page.contents.size
+            if bar.total && bar.total < keys.size
+              bar.total = keys.size
+            end
+            bar.progress = keys.size
             break unless page.next_page?
             page = page.next_page
           end
@@ -239,6 +260,24 @@ module Enops
           credentials: credentials_for(:dest),
           region: region_for(:dest),
         )
+      end
+
+      def source_cloudwatch_client
+        @source_cloudwatch_client ||= Aws::CloudWatch::Client.new(
+          credentials: credentials_for(:source),
+          region: region_for(:source),
+        )
+      end
+
+      def dest_cloudwatch_client
+        @dest_cloudwatch_client ||= Aws::CloudWatch::Client.new(
+          credentials: credentials_for(:dest),
+          region: region_for(:dest),
+        )
+      end
+
+      def cloudwatch_client_for(type)
+        send("#{type}_cloudwatch_client")
       end
 
       def bucket_name_for(type)

@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'aws-sdk-ec2', '~> 1.41'
   spec.add_dependency 'aws-sdk-ecr', '~> 1.4'
   spec.add_dependency 'aws-sdk-s3', '~> 1.17'
+  spec.add_dependency 'aws-sdk-cloudwatch', '~> 1.22'
   spec.add_dependency 'net-ssh-gateway', '~> 2.0'
   spec.add_dependency 'ed25519', '~> 1.2'
   spec.add_dependency 'bcrypt_pbkdf', '~> 1.0'
