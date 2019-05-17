@@ -291,7 +291,7 @@ module Enops
     def pg_restore!(app_name, backup_url)
       run_app_cmd! app_name, <<-SH.strip_heredoc.strip
         wget -O /tmp/backup.dump #{Shellwords.escape backup_url}
-        pg_restore -l /tmp/backup.dump | grep -v 'COMMENT - EXTENSION' > /tmp/backup.list
+        pg_restore -l /tmp/backup.dump | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > /tmp/backup.list
         PGUSER="$(echo "${DATABASE_URL?}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
         echo Resetting...
         PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL?}" -c "DROP OWNED BY ${PGUSER?} CASCADE; CREATE SCHEMA public;"
