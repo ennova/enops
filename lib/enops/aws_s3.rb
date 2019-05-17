@@ -193,14 +193,6 @@ module Enops
         acl
       end
 
-      def source_credentials
-        @source_credentials = if source_profile_name
-          Enops::AwsAuth.cli_credentials(profile_name: source_profile_name)
-        else
-          Enops::AwsAuth.default_credentials
-        end
-      end
-
       def credentials_for(type)
         profile_name = public_send("#{type}_profile_name")
 
