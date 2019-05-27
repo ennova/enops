@@ -34,9 +34,9 @@ module Enops
         if keys_to_copy.empty?
           puts 'Nothing to do.'
         else
-          grant_source_bucket_read
+          grant_source_bucket_read unless same_bucket_owner?
           copy_objects keys_to_copy
-          revoke_source_bucket_read
+          revoke_source_bucket_read unless same_bucket_owner?
         end
       end
 
@@ -180,6 +180,10 @@ module Enops
           exit 1
         end
       rescue Aws::S3::Errors::NoSuchBucketPolicy
+      end
+
+      def same_bucket_owner?
+        source_bucket_owner.id == dest_bucket_owner.id
       end
 
       def grant_source_bucket_read
