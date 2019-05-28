@@ -39,4 +39,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'tty-table', '~> 0.8'
   spec.add_dependency 'ruby-progressbar'
   spec.add_dependency 'parallel'
+  spec.add_dependency 'pg'
 end
