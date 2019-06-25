@@ -12,7 +12,8 @@ module Enops
           datname = current_database() AND
           usename = current_user AND
           pid != pg_backend_pid() AND
-          application_name NOT LIKE 'Heroku+Postgres+-+Automation%'
+          application_name NOT LIKE 'Heroku+Postgres+-+Automation%' AND
+          application_name NOT LIKE 'rdsadmin'
       SQL
 
       conn = PG.connect(database_url, connect_timeout: 10)
