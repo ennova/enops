@@ -17,6 +17,7 @@ require 'zip'
 module Enops
   class ElasticBeanstalk
     APPLICATION_NAME = 'envision'
+    ECR_REGISTRY_ID = '252974019764'
     CONFIG_VAR_NAMESPACE = 'aws:elasticbeanstalk:application:environment'
     AUTOSCALING_LAUNCH_NAMESPACE = 'aws:autoscaling:launchconfiguration'
     AUTOSCALING_GROUP_NAMESPACE = 'aws:autoscaling:asg'
@@ -318,6 +319,7 @@ module Enops
 
     def available_versions
       image_details = ecr_client.describe_images(
+        registry_id: ECR_REGISTRY_ID,
         repository_name: APPLICATION_NAME,
       ).flat_map(&:image_details).sort_by(&:image_pushed_at)
 
@@ -701,7 +703,7 @@ module Enops
 
     def repository
       @repository ||= begin
-        repositories = ecr_client.describe_repositories(repository_names: [APPLICATION_NAME]).flat_map(&:repositories)
+        repositories = ecr_client.describe_repositories(registry_id: ECR_REGISTRY_ID, repository_names: [APPLICATION_NAME]).flat_map(&:repositories)
         unless repositories.size == 1
           raise "Expect to find 1 ECR repository but found #{repositories.size}"
         end
@@ -711,6 +713,7 @@ module Enops
 
     def image_exists?(version_label)
       images = ecr_client.batch_get_image(
+        registry_id: repository.registry_id,
         repository_name: repository.repository_name,
         image_ids: [{image_tag: version_label}],
       ).flat_map(&:images)
