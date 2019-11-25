@@ -27,6 +27,7 @@ module Enops::CLI::Setup
             ruby -rbundler/setup -rshellwords -rrbconfig -e \\"puts \\\\\\"
               export PATH=\#{Shellwords.escape ENV.fetch('PATH')}
               export BUNDLE_GEMFILE=\#{Shellwords.escape Bundler.default_gemfile.to_s}
+              export GEM_PATH=\#{Shellwords.escape Gem.paths.path.join(':')}
               ENOPS_BIN=\#{Shellwords.escape Gem.bin_path('enops', 'enops')}
             \\\\\\"\\"
           "
