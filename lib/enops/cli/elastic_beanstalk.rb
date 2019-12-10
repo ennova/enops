@@ -430,7 +430,8 @@ module Enops::CLI::ElasticBeanstalk
 
     def version_label
       @version_label ||= begin
-        if git_sha = git_ref_to_sha(version)
+        case
+        when git_sha = git_ref_to_sha(version)
           "ref-#{git_sha}"
         else
           version
