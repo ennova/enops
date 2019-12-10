@@ -757,11 +757,13 @@ module Enops
       "#{target_path}.#{File.dirname(name)}.patch"
     end
 
-    def config_file(name, path)
+    def config_file(name, path, mode: '644')
+      raise ArgumentError unless mode =~ /^[0-7]{3}$/
       raise ArgumentError if name.end_with?('.patch')
 
       {
         path => {
+          mode: "000#{mode}",
           content: get_file_content(name),
         },
       }
