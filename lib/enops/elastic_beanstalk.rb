@@ -53,6 +53,10 @@ module Enops
       end
     end
 
+    def app_version(app_name)
+      app_versions[app_name] or raise UserMessageError, "Error getting application version for #{app_name.inspect}"
+    end
+
     def get_status(app_name)
       app_environments.fetch(app_name).map do |env_type, environment|
         complete =

@@ -425,12 +425,22 @@ module Enops::CLI::ElasticBeanstalk
     option '--immutable', :flag, 'provision new EC2 instances instead of updating existing EC2 instances'
     option '--maintenance', :flag, 'enter maintenance mode for the duration of the deploy'
     option '--env-type', 'ENV_TYPE', 'environments to deploy to', multivalued: true, attribute_name: 'env_types'
+    option '--current', :flag, 'redeploy current version instead of a new version'
 
-    parameter 'VERSION', 'version of application to deploy (version label or git ref)'
+    parameter '[VERSION]', 'version of application to deploy (version label or git ref)'
 
     def version_label
+      if version && current?
+        signal_usage_error 'Cannot specify version when using --current'
+      end
+      if version.nil? && !current?
+        signal_usage_error 'No version to deploy specified'
+      end
+
       @version_label ||= begin
         case
+        when current?
+          api.app_version(app_name)
         when git_sha = git_ref_to_sha(version)
           "ref-#{git_sha}"
         else
