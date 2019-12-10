@@ -871,6 +871,11 @@ module Enops
             patch_command('wait_for_staging_port/00run.sh.patch', 'nc -zd'),
           ].inject(:merge),
         },
+        restart_logging: {
+          files: [
+            config_file('restart_logging/restart_logging.sh', '/opt/elasticbeanstalk/hooks/appdeploy/post/99_restart_logging.sh', mode: '755'),
+          ].inject(&:merge),
+        }
       }
     end
 
