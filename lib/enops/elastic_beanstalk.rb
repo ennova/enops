@@ -621,7 +621,7 @@ module Enops
     end
 
     def docker_run_cmd(tty: false)
-      <<-SH.strip_heredoc.strip
+      <<~SH.strip
         set -euo pipefail
         ENV_FILE="$(mktemp -t enops-run-env.XXXXXX)"
         trap 'rm "${ENV_FILE?}"' EXIT
@@ -637,7 +637,7 @@ module Enops
     end
 
     def docker_log_tail_cmd
-      <<-SH.strip_heredoc.strip
+      <<~SH.strip
         set -euo pipefail
         while true; do
           CONTAINER_ID="$(cat /etc/elasticbeanstalk/.aws_beanstalk.staging-container-id 2> /dev/null || cat /etc/elasticbeanstalk/.aws_beanstalk.current-container-id)"
