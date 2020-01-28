@@ -3,8 +3,14 @@ set -euo pipefail
 
 URL="${1?}"
 
-DATA_FILE="$(mktemp -t enops-restore-data.XXXXXX)"
-wget -O "$DATA_FILE" "$URL"
+if echo "$URL" | grep -q ://; then
+  TEMP_DATA_FILE="$(mktemp -t enops-restore-data.XXXXXX)"
+  wget -O "$TEMP_DATA_FILE" "$URL"
+  DATA_FILE="$TEMP_DATA_FILE"
+else
+  TEMP_DATA_FILE=
+  DATA_FILE="$URL"
+fi
 
 LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
 pg_restore -l "$DATA_FILE" | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > "$LIST_FILE"
@@ -17,4 +23,4 @@ echo Restoring...
 pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
 
 echo Done.
-rm -f "$DATA_FILE" "$LIST_FILE"
+rm -f "$TEMP_DATA_FILE" "$LIST_FILE"
