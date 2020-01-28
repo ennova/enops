@@ -4,6 +4,10 @@ module Enops
   module PostgreSQL
     extend self
 
+    def pg_restore_script_path
+      File.dirname(__FILE__) + '/support/enops_pg_restore'
+    end
+
     def wait_for_connections_to_close(database_url)
       sql = <<-SQL.gsub(/\s+/, ' ').strip
         SELECT pid, application_name

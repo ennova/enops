@@ -309,17 +309,7 @@ module Enops
     end
 
     def pg_restore!(app_name, backup_url)
-      run_app_cmd! app_name, <<-SH.strip_heredoc.strip
-        wget -O /tmp/backup.dump #{Shellwords.escape backup_url}
-        pg_restore -l /tmp/backup.dump | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > /tmp/backup.list
-        PGUSER="$(echo "${DATABASE_URL?}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
-        echo Resetting...
-        PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL?}" -c "DROP OWNED BY ${PGUSER?} CASCADE; CREATE SCHEMA public;"
-        echo Restoring...
-        pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL?}" --exit-on-error -L /tmp/backup.list /tmp/backup.dump
-        echo Done.
-        rm /tmp/backup.list /tmp/backup.dump
-      SH
+      run_app_script! app_name, File.read(PostgreSQL.pg_restore_script_path), backup_url
     end
 
     def run_instance_ssh!(app_name, env_type:, cmd: nil)

@@ -1,0 +1,10 @@
+#!/bin/bash
+wget -O /tmp/backup.dump "${1?}"
+pg_restore -l /tmp/backup.dump | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > /tmp/backup.list
+PGUSER="$(echo "${DATABASE_URL?}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
+echo Resetting...
+PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL?}" -c "DROP OWNED BY ${PGUSER?} CASCADE; CREATE SCHEMA public;"
+echo Restoring...
+pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL?}" --exit-on-error -L /tmp/backup.list /tmp/backup.dump
+echo Done.
+rm /tmp/backup.list /tmp/backup.dump
