@@ -16,8 +16,14 @@ LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
 pg_restore -l "$DATA_FILE" | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > "$LIST_FILE"
 
 echo Resetting...
-PGUSER="$(echo "${DATABASE_URL}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
-PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL}" -c "DROP OWNED BY ${PGUSER} CASCADE; CREATE SCHEMA public;"
+if [ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 "$DATABASE_URL" -c "select current_setting('is_superuser')")" == on ]; then
+  DATABASE_NAME="$(basename "$DATABASE_URL")"
+  dropdb --if-exists "$DATABASE_NAME"
+  createdb "$DATABASE_NAME"
+else
+  PGUSER="$(echo "${DATABASE_URL}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL}" -c "DROP OWNED BY ${PGUSER} CASCADE; CREATE SCHEMA public;"
+fi
 
 echo Restoring...
 pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
