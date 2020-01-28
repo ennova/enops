@@ -1,16 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-wget -O /tmp/backup.dump "${1?}"
+URL="${1?}"
 
-pg_restore -l /tmp/backup.dump | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > /tmp/backup.list
+DATA_FILE="$(mktemp -t enops-restore-data.XXXXXX)"
+wget -O "$DATA_FILE" "$URL"
+
+LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
+pg_restore -l "$DATA_FILE" | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > "$LIST_FILE"
 
 echo Resetting...
 PGUSER="$(echo "${DATABASE_URL}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
 PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL}" -c "DROP OWNED BY ${PGUSER} CASCADE; CREATE SCHEMA public;"
 
 echo Restoring...
-pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L /tmp/backup.list /tmp/backup.dump
+pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
 
 echo Done.
-rm /tmp/backup.list /tmp/backup.dump
+rm -f "$DATA_FILE" "$LIST_FILE"
