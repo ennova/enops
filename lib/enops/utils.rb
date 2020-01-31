@@ -74,6 +74,10 @@ module Enops
       trap 'INT', org_trap_int
     end
 
+    def basepath(path)
+      path.sub(%r{^.*/\.\/}, '')
+    end
+
     private
 
     def log_io_lines(src:, dst:, quiet:)
