@@ -6,6 +6,7 @@ require 'active_support/core_ext/module/delegation'
 require 'active_support/core_ext/string/filters'
 require 'active_support/core_ext/string/strip'
 require 'enops/aws_auth'
+require 'enops/runner'
 require 'aws-sdk-elasticbeanstalk'
 require 'aws-sdk-ec2'
 require 'aws-sdk-ecr'
@@ -291,6 +292,20 @@ module Enops
       instance_id = instances.fetch('worker', []).sample || instances.values.flatten.sample
 
       Enops::Utils.execute_interactive instance_docker_run_cmd(instance_id, cmd)
+    end
+
+    def run_app_script!(app_name, script, *script_args)
+      instances = get_instances(app_name)
+      instance_id = instances.fetch('worker', []).sample || instances.values.flatten.sample
+
+      runner = Runner.new
+      runner.platform = lambda do |cmd|
+        instance_docker_run_cmd(instance_id, cmd)
+      end
+      runner.extract_path = '/tmp'
+      runner.add_file 'enops-script', 0700, script
+      runner.command = ['/tmp/enops-script', *script_args].map(&Shellwords.method(:escape)).join(' ')
+      runner.execute
     end
 
     def pg_restore!(app_name, backup_url)

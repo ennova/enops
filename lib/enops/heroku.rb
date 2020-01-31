@@ -1,4 +1,5 @@
 require 'enops/utils'
+require 'enops/runner'
 require 'fileutils'
 require 'netrc'
 require 'heroics'
@@ -122,6 +123,15 @@ module Enops
     # This wrapper adds support for detecting exit status codes from `heroku run`.
     def run(app_name, cmd)
       cmd app_name, "run --exit-code #{Shellwords.escape cmd}"
+    end
+
+    def run_script!(app_name, script, *script_args)
+      runner = Runner.new
+      runner.platform = Runner::Platform::Heroku.new(app_name)
+      runner.extract_path = '/tmp'
+      runner.add_file 'enops-script', 0700, script
+      runner.command = ['/tmp/enops-script', *script_args].map(&Shellwords.method(:escape)).join(' ')
+      runner.execute
     end
 
     def get_maintenance(app_name)
