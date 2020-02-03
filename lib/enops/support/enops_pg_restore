@@ -1,7 +1,40 @@
 #!/bin/bash
 set -euo pipefail
 
-URL="${1?}"
+_self() {
+  basename "$0"
+}
+
+_error() {
+  echo "$(_self): $*" >&2
+  exit 1
+}
+
+_usage() {
+  echo "Usage: $(_self): <URL|file.dump>" >&2
+  exit 1
+}
+
+URL=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -*)
+      _error "Unknown option: $1"
+      ;;
+    *)
+      if [ -n "$URL" ]; then
+        _usage
+      fi
+      URL="$1"
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$URL" ]; then
+  _usage
+fi
 
 if echo "$URL" | grep -q ://; then
   TEMP_DATA_FILE="$(mktemp -t enops-restore-data.XXXXXX)"
