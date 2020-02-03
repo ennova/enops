@@ -134,6 +134,10 @@ module Enops
       runner.execute
     end
 
+    def pg_restore!(app_name, backup_url)
+      run_script! app_name, File.read(PostgreSQL.pg_restore_script_path), backup_url
+    end
+
     def get_maintenance(app_name)
       info = with_retry do
         client.app.info app_name
