@@ -11,17 +11,21 @@ _error() {
 }
 
 _usage() {
-  echo "Usage: $(_self): [--no-refresh-views] <URL|file.dump>" >&2
+  echo "Usage: $(_self): [--no-refresh-views] [--no-table-data=PATTERN] <URL|file.dump>" >&2
   exit 1
 }
 
 URL=
 REFRESH_VIEWS=1
+NO_TABLE_DATA_PATTERN=
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-refresh-views)
       REFRESH_VIEWS=0
+      ;;
+    --no-table-data=*)
+      NO_TABLE_DATA_PATTERN="$(echo "$1" | sed 's/^--[^=]*=//')"
       ;;
     -*)
       _error "Unknown option: $1"
@@ -53,6 +57,11 @@ LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
 pg_restore -l "$DATA_FILE" |
   if [ "$REFRESH_VIEWS" -eq 0 ]; then
     grep -v 'MATERIALIZED VIEW DATA'
+  else
+    cat
+  fi |
+  if [ -n "$NO_TABLE_DATA_PATTERN" ]; then
+    egrep -v " TABLE DATA public ($NO_TABLE_DATA_PATTERN) "
   else
     cat
   fi |
