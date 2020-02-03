@@ -79,7 +79,14 @@ else
 fi
 
 echo Restoring...
-pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
+PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
+PGDUMP_VERSION="$(grep 'pg_dump version:' "$LIST_FILE" | sed 's/^.*: //')"
+if [ "${PGRESTORE_VERSION%%.*}" -gt 10 ] && [ "${PGDUMP_VERSION%%.*}" -lt 10 ]; then
+  PGRESTORE_OPTIONS="--if-exists --clean -j 1"
+else
+  PGRESTORE_OPTIONS=
+fi
+pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS
 
 echo Done.
 rm -f "$TEMP_DATA_FILE" "$LIST_FILE"
