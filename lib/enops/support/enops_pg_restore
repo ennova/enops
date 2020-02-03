@@ -1,0 +1,92 @@
+#!/bin/bash
+set -euo pipefail
+
+_self() {
+  basename "$0"
+}
+
+_error() {
+  echo "$(_self): $*" >&2
+  exit 1
+}
+
+_usage() {
+  echo "Usage: $(_self): [--no-refresh-views] [--no-table-data=PATTERN] <URL|file.dump>" >&2
+  exit 1
+}
+
+URL=
+REFRESH_VIEWS=1
+NO_TABLE_DATA_PATTERN=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-refresh-views)
+      REFRESH_VIEWS=0
+      ;;
+    --no-table-data=*)
+      NO_TABLE_DATA_PATTERN="$(echo "$1" | sed 's/^--[^=]*=//')"
+      ;;
+    -*)
+      _error "Unknown option: $1"
+      ;;
+    *)
+      if [ -n "$URL" ]; then
+        _usage
+      fi
+      URL="$1"
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$URL" ]; then
+  _usage
+fi
+
+if echo "$URL" | grep -q ://; then
+  TEMP_DATA_FILE="$(mktemp -t enops-restore-data.XXXXXX)"
+  wget -O "$TEMP_DATA_FILE" "$URL"
+  DATA_FILE="$TEMP_DATA_FILE"
+else
+  TEMP_DATA_FILE=
+  DATA_FILE="$URL"
+fi
+
+LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
+pg_restore -l "$DATA_FILE" |
+  if [ "$REFRESH_VIEWS" -eq 0 ]; then
+    grep -v 'MATERIALIZED VIEW DATA'
+  else
+    cat
+  fi |
+  if [ -n "$NO_TABLE_DATA_PATTERN" ]; then
+    egrep -v " TABLE DATA public ($NO_TABLE_DATA_PATTERN) "
+  else
+    cat
+  fi |
+  egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' |
+  cat > "$LIST_FILE"
+
+echo Resetting...
+if [ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 "$DATABASE_URL" -c "select current_setting('is_superuser')")" == on ]; then
+  DATABASE_NAME="$(basename "$DATABASE_URL")"
+  dropdb --if-exists "$DATABASE_NAME"
+  createdb "$DATABASE_NAME"
+else
+  PGUSER="$(echo "${DATABASE_URL}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL}" -c "DROP OWNED BY ${PGUSER} CASCADE; CREATE SCHEMA public;"
+fi
+
+echo Restoring...
+PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
+PGDUMP_VERSION="$(grep 'pg_dump version:' "$LIST_FILE" | sed 's/^.*: //')"
+if [ "${PGRESTORE_VERSION%%.*}" -gt 10 ] && [ "${PGDUMP_VERSION%%.*}" -lt 10 ]; then
+  PGRESTORE_OPTIONS="--if-exists --clean -j 1"
+else
+  PGRESTORE_OPTIONS=
+fi
+pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS
+
+echo Done.
+rm -f "$TEMP_DATA_FILE" "$LIST_FILE"
