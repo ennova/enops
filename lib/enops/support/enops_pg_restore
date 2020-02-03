@@ -46,7 +46,9 @@ else
 fi
 
 LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
-pg_restore -l "$DATA_FILE" | egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' > "$LIST_FILE"
+pg_restore -l "$DATA_FILE" |
+  egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' |
+  cat > "$LIST_FILE"
 
 echo Resetting...
 if [ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 "$DATABASE_URL" -c "select current_setting('is_superuser')")" == on ]; then
