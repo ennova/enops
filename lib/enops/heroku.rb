@@ -166,6 +166,10 @@ module Enops
       format_formation_response(formation)
     end
 
+    def restart!(app_name)
+      client.dyno.restart_all(app_name)
+    end
+
     def get_feature_enabled(app_name, feature_name)
       result = client.app_feature.info(app_name, feature_name)
       result.fetch('enabled')
