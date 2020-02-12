@@ -31,7 +31,7 @@ module Enops
         end
       end
 
-      class ElasticBeanstalk
+      class ElasticBeanstalk < Remote
         def call(cmd)
           "enops eb run --app #{Shellwords.escape app_name} -- #{cmd}"
         end
