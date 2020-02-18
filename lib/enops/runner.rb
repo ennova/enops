@@ -123,8 +123,10 @@ module Enops
     def bootstrap_script
       <<~SH.tr_s("\n", ';')
         set -euo pipefail
+        stty -echo
         echo -en enops\\\\x2dupload
         dd bs=1 count=#{bootstrap_data.bytesize} | base64 --decode | tar zx #{"-C #{Shellwords.escape extract_path}" if extract_path}
+        stty echo
         echo -en enops\\\\x2dexec
         #{"cd #{Shellwords.escape(work_dir).sub(/\A\\~/, '~')}" if work_dir}
         exec #{command}
