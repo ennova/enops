@@ -27,7 +27,7 @@ module Enops
 
       class Heroku < Remote
         def call(cmd)
-          "CI=true heroku run --app #{Shellwords.escape app_name} -- #{Shellwords.escape cmd}"
+          "CI=true heroku run --exit-code --app #{Shellwords.escape app_name} -- #{Shellwords.escape cmd}"
         end
       end
 
