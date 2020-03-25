@@ -127,6 +127,7 @@ module Enops
 
     def run_script!(app_name, script, *script_args)
       runner = Runner.new
+      runner.logger = Enops.logger
       runner.platform = Runner::Platform::Heroku.new(app_name)
       runner.extract_path = '/tmp'
       runner.add_file 'enops-script', 0700, script
