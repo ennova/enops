@@ -131,7 +131,9 @@ module Enops
       runner.extract_path = '/tmp'
       runner.add_file 'enops-script', 0700, script
       runner.command = ['/tmp/enops-script', *script_args].map(&Shellwords.method(:escape)).join(' ')
-      runner.execute
+      with_heroku_env do
+        runner.execute
+      end
     end
 
     def pg_restore!(app_name, backup_url)
