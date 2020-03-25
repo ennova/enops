@@ -59,11 +59,15 @@ module Enops
       input_thread = nil
 
       PTY.spawn(spawn_cmd) do |read, write, pid|
-        Signal.trap(:WINCH) { write.winsize = STDOUT.winsize }
-        input_thread = Thread.new { IO.copy_stream(STDIN, write) }
+        unless logger
+          Signal.trap(:WINCH) { write.winsize = STDOUT.winsize }
+          input_thread = Thread.new { IO.copy_stream(STDIN, write) }
+        end
 
         begin
-          IO.console&.raw!
+          unless logger
+            IO.console&.raw!
+          end
 
           quiet = false
           buf = ''
@@ -96,7 +100,9 @@ module Enops
 
           Process.wait(pid)
         ensure
-          IO.console&.cooked!
+          unless logger
+            IO.console&.cooked!
+          end
           output nil if logger
         end
 
