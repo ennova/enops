@@ -43,6 +43,7 @@ module Enops
     attr_accessor :extract_path
     attr_accessor :command
     attr_accessor :raise
+    attr_accessor :logger
 
     def initialize
       @platform = Platform::Local.new
@@ -96,6 +97,7 @@ module Enops
           Process.wait(pid)
         ensure
           IO.console&.cooked!
+          output nil if logger
         end
 
         unless $?.success?
@@ -142,7 +144,21 @@ module Enops
     end
 
     def output(str)
-      STDOUT.write str
+      if logger
+        @output ||= ''
+        if str
+          @output << str
+        else
+          @output << "\n" unless @output.empty?
+        end
+        while @output.match?(/\r?\n/)
+          line, @output = @output.split(/\r?\n/, 2)
+          line = line.split("\r").inject('') { |buffer, part| buffer[0...part.size] = part; buffer }
+          logger.debug line
+        end
+      else
+        STDOUT.write str
+      end
     end
   end
 end
