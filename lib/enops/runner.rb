@@ -75,13 +75,13 @@ module Enops
             end
 
             unless quiet
-              STDOUT.print char
+              output char
             end
 
             if buf
               buf.concat char
               if buf =~ /(?<! )enops-upload$/
-                STDOUT.write "\33[2K\r"
+                output "\33[2K\r"
                 quiet = true
                 buf = ''
                 Thread.new { write.write bootstrap_data }
@@ -139,6 +139,10 @@ module Enops
 
     def spawn_cmd
       platform.call(bootstrap_cmd)
+    end
+
+    def output(str)
+      STDOUT.write str
     end
   end
 end
