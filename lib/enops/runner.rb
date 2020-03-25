@@ -89,7 +89,13 @@ module Enops
                 output "\33[2K\r"
                 quiet = true
                 buf = ''
-                Thread.new { write.write bootstrap_data }
+                Thread.new do
+                  write.write bootstrap_data
+                  if logger
+                    write.write "\u0004" # EOF
+                    write.close
+                  end
+                end
               end
               if buf =~ /(?<! )enops-exec$/
                 quiet = false
