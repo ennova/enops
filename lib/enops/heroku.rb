@@ -266,14 +266,11 @@ module Enops
     end
 
     def with_heroku_env
-      cached_password = password
       Bundler.with_clean_env do
-        ENV['HEROKU_API_KEY'] = cached_password
-        ENV['CI'] = 'true'
-        yield
+        ClimateControl.modify HEROKU_API_KEY: password, CI: 'true' do
+          yield
+        end
       end
-    ensure
-      ENV['HEROKU_API_KEY'] = nil
     end
 
     def api_get(hostname, path)
