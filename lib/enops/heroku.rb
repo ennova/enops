@@ -170,7 +170,9 @@ module Enops
     end
 
     def restart!(app_name)
-      client.dyno.restart_all(app_name)
+      with_retry do
+        client.dyno.restart_all(app_name)
+      end
     end
 
     def get_feature_enabled(app_name, feature_name)
