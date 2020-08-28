@@ -73,9 +73,12 @@ module Enops::CLI::Aws
 
     def ensure_aws_cli_version
       version = aws_cli_version
-      requirement = Gem::Requirement.new('~> 1.12')
+      requirements = [
+        Gem::Requirement.new('~> 1.12'),
+        Gem::Requirement.new('~> 2.0'),
+      ]
 
-      unless requirement.satisfied_by?(version)
+      unless requirements.any? { |requirement| requirement.satisfied_by?(version) }
         STDERR.puts "AWS CLI #{requirement} is required but have #{version}."
         exit 1
       end
