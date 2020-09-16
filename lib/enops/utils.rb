@@ -24,6 +24,7 @@ module Enops
     end
 
     def with_retry(tries:, sleep:, on: StandardError, caller_label: self.caller_label)
+      Enops.logger
       Retryable.retryable(tries: tries, sleep: sleep, on: on) do |try_num|
         Enops.logger.warn "Retrying #{caller_label} (try #{try_num+1} of #{tries})" if try_num > 0
         yield
