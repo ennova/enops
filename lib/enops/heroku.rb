@@ -268,7 +268,7 @@ module Enops
     end
 
     def with_heroku_env
-      Bundler.with_clean_env do
+      Bundler.with_original_env do
         ClimateControl.modify HEROKU_API_KEY: password, CI: 'true' do
           yield
         end
