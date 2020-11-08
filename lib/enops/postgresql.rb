@@ -19,7 +19,8 @@ module Enops
           application_name NOT LIKE 'Heroku+Postgres+-%' AND
           application_name NOT LIKE 'Heroku Postgres -%' AND
           application_name NOT LIKE 'rdsadmin' AND
-          application_name NOT LIKE 'postgres_fdw'
+          application_name NOT LIKE 'postgres_fdw' AND
+          application_name NOT LIKE 'queue_lock'
       SQL
 
       conn = PG.connect(database_url, connect_timeout: 10)
