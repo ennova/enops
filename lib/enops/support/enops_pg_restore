@@ -94,7 +94,7 @@ if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 
   echo Restoring to older PostgreSQL version...
   pg_restore --no-acl --no-owner --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS -f- |
     grep -vxF 'SET default_table_access_method = heap;' |
-    sed 's/FOR EACH ROW EXECUTE FUNCTION public\./FOR EACH ROW EXECUTE PROCEDURE public\./' |
+    sed 's/ FOR EACH ROW EXECUTE FUNCTION / FOR EACH ROW EXECUTE PROCEDURE /' |
     PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
 else
   echo Restoring...
