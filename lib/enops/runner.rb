@@ -42,7 +42,7 @@ module Enops
     attr_accessor :work_dir
     attr_accessor :extract_path
     attr_accessor :command
-    attr_accessor :raise
+    attr_accessor :raise_on_error
     attr_accessor :logger
 
     def initialize
@@ -50,7 +50,7 @@ module Enops
       @work_dir = nil
       @extract_path = nil
       @command = 'bash -i'
-      @raise = false
+      @raise_on_error = false
     end
 
     def_delegators :tarballer, :add_file
@@ -113,7 +113,7 @@ module Enops
         end
 
         unless $?.success?
-          if raise
+          if raise_on_error
             raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
           else
             exit $?.exitstatus || 130
