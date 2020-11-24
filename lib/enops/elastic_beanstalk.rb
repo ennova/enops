@@ -299,6 +299,7 @@ module Enops
       instance_id = instances.fetch('worker', []).sample || instances.values.flatten.sample
 
       runner = Runner.new
+      runner.raise_on_error = true
       runner.platform = lambda do |cmd|
         instance_docker_run_cmd(instance_id, cmd)
       end
