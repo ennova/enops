@@ -114,7 +114,7 @@ module Enops
 
         unless $?.success?
           if raise_on_error
-            raise ExecuteError.new(cmd: cmd, status: $?, output: nil)
+            raise ExecuteError.new(cmd: command, status: $?, output: nil)
           else
             exit $?.exitstatus || 130
           end
