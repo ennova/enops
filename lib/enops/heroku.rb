@@ -223,6 +223,9 @@ module Enops
       detail.fetch('info').map do |row|
         key = row.fetch('name')
         values = row.fetch('values')
+        if key == 'PG Version' && values.last == '(deprecating)'
+          values = values[0..-2]
+        end
         if values.size > 1
           raise KeyError, "key has more than one value: #{key}"
         end
