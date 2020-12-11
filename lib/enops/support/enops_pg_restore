@@ -95,6 +95,8 @@ if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 
   pg_restore --no-acl --no-owner --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS -f- |
     grep -vxF 'SET default_table_access_method = heap;' |
     sed 's/ FOR EACH ROW EXECUTE FUNCTION / FOR EACH ROW EXECUTE PROCEDURE /' |
+    sed 's/PARTITION BY LIST ([^)]*);/;/' |
+    sed 's/\(CREATE INDEX [^ ]* ON \)ONLY /\1/' |
     PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
 else
   echo Restoring...
