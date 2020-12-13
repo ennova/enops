@@ -30,12 +30,6 @@ module Enops
           "CI=true heroku run --exit-code --app #{Shellwords.escape app_name} -- #{Shellwords.escape cmd}"
         end
       end
-
-      class ElasticBeanstalk < Remote
-        def call(cmd)
-          "enops eb run --app #{Shellwords.escape app_name} -- #{cmd}"
-        end
-      end
     end
 
     attr_accessor :platform

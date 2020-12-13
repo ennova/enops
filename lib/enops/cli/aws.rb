@@ -1,5 +1,7 @@
 require 'json'
 require 'aws-sdk-core'
+require 'active_support/inflector'
+require 'enops/aws_auth'
 
 module Enops::CLI::Aws
   class Command < Enops::CLI::Command

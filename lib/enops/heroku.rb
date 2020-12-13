@@ -4,6 +4,7 @@ require 'fileutils'
 require 'netrc'
 require 'heroics'
 require 'shellwords'
+require 'climate_control'
 
 module Enops
   class Heroku

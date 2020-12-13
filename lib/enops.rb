@@ -1,7 +1,6 @@
 require 'enops/version'
 require 'enops/utils'
 require 'enops/heroku'
-require 'enops/elastic_beanstalk'
 require 'enops/postgresql'
 
 module Enops
