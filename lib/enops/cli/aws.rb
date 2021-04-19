@@ -1,6 +1,7 @@
 require 'json'
 require 'aws-sdk-core'
 require 'active_support/inflector'
+require 'active_support/core_ext/object/blank'
 require 'enops/aws_auth'
 
 module Enops::CLI::Aws
