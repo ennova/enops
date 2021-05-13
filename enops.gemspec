@@ -33,4 +33,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'ruby-progressbar'
   spec.add_dependency 'parallel'
   spec.add_dependency 'pg'
+  spec.add_dependency 'excon'
 end

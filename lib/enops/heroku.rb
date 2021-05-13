@@ -5,6 +5,7 @@ require 'netrc'
 require 'heroics'
 require 'shellwords'
 require 'climate_control'
+require 'excon'
 
 module Enops
   class Heroku
@@ -92,6 +93,13 @@ module Enops
       commit_sha ||= if slug = release.fetch('slug')
         slug = with_retry { client.slug.info(app_name, slug.fetch('id')) }
         slug.fetch('commit')
+      end
+
+      commit_sha ||= if release.fetch('status') == 'succeeded'
+        if url = release.fetch('output_stream_url')
+          release_phase_output = Excon.get(url).body
+          release_phase_output.match(/^GIT_COMMIT=(.+?)\e\[2K\r/)&.captures&.first
+        end
       end
 
       commit_sha
