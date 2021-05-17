@@ -85,8 +85,20 @@ module Enops
       end
     end
 
-    def get_commit_sha(app_name)
+    def get_current_release(app_name)
       release = get_latest_release(app_name)
+
+      unless release.fetch('current')
+        release = with_retry do
+          client.release.list(app_name).detect { |r| r.fetch('current') }
+        end
+      end
+
+      release
+    end
+
+    def get_commit_sha(app_name)
+      release = get_current_release(app_name)
 
       commit_sha = nil
 
