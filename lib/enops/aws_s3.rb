@@ -14,15 +14,17 @@ module Enops
       attr_reader :dest_bucket_name
       attr_reader :dest_profile_name
       attr_reader :dest_bucket_region
+      attr_reader :prefix
       attr_reader :only_missing
 
-      def initialize(source_bucket_name:, source_profile_name: nil, source_bucket_region: nil, dest_bucket_name:, dest_profile_name: nil, dest_bucket_region: nil, only_missing: false)
+      def initialize(source_bucket_name:, source_profile_name: nil, source_bucket_region: nil, dest_bucket_name:, dest_profile_name: nil, dest_bucket_region: nil, prefix: nil, only_missing: false)
         @source_bucket_name = source_bucket_name
         @source_profile_name = source_profile_name
         @source_bucket_region = source_bucket_region
         @dest_bucket_name = dest_bucket_name
         @dest_profile_name = dest_profile_name
         @dest_bucket_region = dest_bucket_region
+        @prefix = prefix
         @only_missing = only_missing
       end
 
@@ -81,9 +83,11 @@ module Enops
         total = statistics.datapoints.sort_by(&:timestamp).last&.maximum
         total = Integer(total) if total
 
+        total = nil if prefix
+
         with_progress_bar total: total, title: nil do |bar|
           keys = []
-          page = s3_client_for(type).list_objects_v2(bucket: bucket_name_for(type), max_keys: 1000)
+          page = s3_client_for(type).list_objects_v2(bucket: bucket_name_for(type), prefix: prefix, max_keys: 1000)
           loop do
             keys += page.contents.map(&:key)
             if bar.total && bar.total < keys.size

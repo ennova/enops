@@ -292,6 +292,7 @@ module Enops::CLI::Aws
     option '--dest-profile', 'AWS_PROFILE', 'AWS profile to use for writing to the source bucket'
     option '--source-region', 'AWS_REGION', 'AWS region of the source bucket (defaults to profile region)'
     option '--dest-region', 'AWS_REGION', 'AWS region of the destination bucket (defaults to profile region)'
+    option '--prefix', 'PREFIX', 'limit to keys that begin with the specified prefix (defaults to entire bucket)'
     option '--only-missing', :flag, 'skip keys which already exist in the destination (note: may not be safe if previous sync was interrupted)'
 
     def execute
@@ -304,6 +305,7 @@ module Enops::CLI::Aws
         dest_profile_name: dest_profile,
         dest_bucket_name: dest_bucket,
         dest_bucket_region: dest_region,
+        prefix: prefix,
         only_missing: only_missing?,
       ).sync!
     end
