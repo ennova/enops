@@ -15,9 +15,10 @@ module Enops
       attr_reader :dest_profile_name
       attr_reader :dest_bucket_region
       attr_reader :prefix
+      attr_reader :exclude_prefix
       attr_reader :only_missing
 
-      def initialize(source_bucket_name:, source_profile_name: nil, source_bucket_region: nil, dest_bucket_name:, dest_profile_name: nil, dest_bucket_region: nil, prefix: nil, only_missing: false)
+      def initialize(source_bucket_name:, source_profile_name: nil, source_bucket_region: nil, dest_bucket_name:, dest_profile_name: nil, dest_bucket_region: nil, prefix: nil, exclude_prefix: nil, only_missing: false)
         @source_bucket_name = source_bucket_name
         @source_profile_name = source_profile_name
         @source_bucket_region = source_bucket_region
@@ -25,6 +26,7 @@ module Enops
         @dest_profile_name = dest_profile_name
         @dest_bucket_region = dest_bucket_region
         @prefix = prefix
+        @exclude_prefix = exclude_prefix
         @only_missing = only_missing
       end
 
@@ -32,6 +34,9 @@ module Enops
         source_keys = get_bucket_keys(:source)
         keys_to_skip = only_missing ? get_bucket_keys(:dest) : []
         keys_to_copy = source_keys - keys_to_skip
+        if exclude_prefix
+          keys_to_copy.reject! { |key| key.start_with?(exclude_prefix) }
+        end
 
         if keys_to_copy.empty?
           puts 'Nothing to do.'
