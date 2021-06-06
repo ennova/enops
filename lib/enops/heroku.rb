@@ -89,21 +89,24 @@ module Enops
       end
     end
 
-    def get_current_release(app_name)
-      is_current_release = lambda do |release|
-        release.fetch('current')
+    def get_last_successful_app_release(app_name)
+      is_successful_app_release = lambda do |release|
+        is_successful = release.fetch('status') == 'succeeded'
+        is_addon = release.fetch('user').fetch('email').end_with?('@addons.heroku.com')
+
+        is_successful && !is_addon
       end
 
       release = get_latest_release(app_name)
-      unless is_current_release[release]
-        release = get_recent_releases(app_name, 10).detect(&is_current_release)
+      unless is_successful_app_release[release]
+        release = get_recent_releases(app_name, 10).detect(&is_successful_app_release)
       end
 
       release
     end
 
     def get_commit_sha(app_name)
-      release = get_current_release(app_name)
+      release = get_last_successful_app_release(app_name)
 
       commit_sha = nil
 
