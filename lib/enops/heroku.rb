@@ -78,9 +78,13 @@ module Enops
     end
 
     def get_latest_release(app_name)
+      get_recent_releases(app_name, 1).first
+    end
+
+    def get_recent_releases(app_name, count)
       with_retry do
-        with_client_headers 'Range' => 'version ..; order=desc, max=1;' do
-          client.release.list(app_name).first
+        with_client_headers 'Range' => "version ..; order=desc, max=#{count};" do
+          client.release.list(app_name).first(count)
         end
       end
     end
