@@ -90,10 +90,13 @@ module Enops
     end
 
     def get_current_release(app_name)
-      release = get_latest_release(app_name)
+      is_current_release = lambda do |release|
+        release.fetch('current')
+      end
 
-      unless release.fetch('current')
-        release = get_recent_releases(app_name, 10).detect { |r| r.fetch('current') }
+      release = get_latest_release(app_name)
+      unless is_current_release[release]
+        release = get_recent_releases(app_name, 10).detect(&is_current_release)
       end
 
       release
