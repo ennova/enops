@@ -93,9 +93,7 @@ module Enops
       release = get_latest_release(app_name)
 
       unless release.fetch('current')
-        release = with_retry do
-          client.release.list(app_name).detect { |r| r.fetch('current') }
-        end
+        release = get_recent_releases(app_name, 10).detect { |r| r.fetch('current') }
       end
 
       release
