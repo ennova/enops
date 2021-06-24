@@ -20,6 +20,7 @@ module Enops
           application_name NOT LIKE 'Heroku Postgres -%' AND
           application_name NOT LIKE 'rdsadmin' AND
           application_name NOT LIKE 'postgres_fdw' AND
+          application_name NOT LIKE 'PostgreSQL JDBC Driver' AND
           application_name NOT LIKE 'queue_lock'
       SQL
 
