@@ -38,7 +38,7 @@ module Enops
       end
 
     ensure
-      conn.close
+      conn&.close
     end
 
     private
