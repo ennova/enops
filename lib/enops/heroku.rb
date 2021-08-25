@@ -259,6 +259,10 @@ module Enops
       api_get hostname, "/client/v11/databases/#{addon_id}"
     end
 
+    def redis_addon_detail(addon)
+      api_get "redis-api.heroku.com", "/redis/v0/databases/#{addon.fetch("name")}"
+    end
+
     def postgresql_addon_detail_info(detail)
       detail.fetch('info').map do |row|
         key = row.fetch('name')
