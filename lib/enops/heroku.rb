@@ -316,8 +316,8 @@ module Enops
     def api_get(hostname, path)
       connection = Excon.new(
         'https://' + hostname,
-        username: heroku.username,
-        password: heroku.password,
+        username: username,
+        password: password,
         headers: @default_client_headers,
       )
 
