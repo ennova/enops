@@ -224,13 +224,19 @@ module Enops
       new_enabled
     end
 
-    def postgresql_addon_attachments(app_name)
+    def data_addon_attachments(app_name, types: %i[postgresql redis])
+      plan_pattern = /^heroku-#{Regexp.union(types.map(&:to_s))}:/
+
       with_retry do
         with_client_headers 'Accept-Inclusion' => 'addon:plan,config_vars' do
           client.add_on_attachment.list_by_app(app_name)
-            .select { |result| result.fetch('addon').fetch('plan').fetch('name').start_with?('heroku-postgresql:') }
+            .select { |result| result.fetch('addon').fetch('plan').fetch('name').match?(plan_pattern) }
         end
       end
+    end
+
+    def postgresql_addon_attachments(app_name)
+      data_addon_attachments(app_name, types: %i[postgresql])
     end
 
     def postgresql_addon(addon_name)
