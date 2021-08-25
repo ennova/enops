@@ -263,6 +263,17 @@ module Enops
       api_get "redis-api.heroku.com", "/redis/v0/databases/#{addon.fetch("name")}"
     end
 
+    def data_addon_detail(addon)
+      case addon.fetch('plan').fetch('name')
+      when /^heroku-postgresql:/
+        postgresql_addon_detail(addon)
+      when /^heroku-redis:/
+        redis_addon_detail(addon)
+      else
+        raise ArgumentError
+      end
+    end
+
     def postgresql_addon_detail_info(detail)
       detail.fetch('info').map do |row|
         key = row.fetch('name')
