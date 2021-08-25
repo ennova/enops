@@ -274,7 +274,7 @@ module Enops
       end
     end
 
-    def postgresql_addon_detail_info(detail)
+    def data_addon_detail_info(detail)
       detail.fetch('info').map do |row|
         key = row.fetch('name')
         values = row.fetch('values')
@@ -288,6 +288,7 @@ module Enops
         [key, values.first]
       end.to_h
     end
+    alias :postgresql_addon_detail_info :data_addon_detail_info
 
     def postgresql_backups_capture(app_name)
       output = cmd app_name, 'pg:backups:capture'
