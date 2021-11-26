@@ -256,11 +256,15 @@ module Enops
       addon_id = addon.fetch('id')
       hostname = postgresql_addon_production?(addon) ? 'postgres-api.heroku.com' : 'postgres-starter-api.heroku.com'
 
-      api_get hostname, "/client/v11/databases/#{addon_id}"
+      path = "/client/v11/databases/#{addon_id}"
+
+      api_get hostname, path
     end
 
     def redis_addon_detail(addon)
-      api_get "redis-api.heroku.com", "/redis/v0/databases/#{addon.fetch("name")}"
+      path = "/redis/v0/databases/#{addon.fetch("name")}"
+
+      api_get "redis-api.heroku.com", path
     end
 
     def data_addon_detail(addon)
