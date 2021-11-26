@@ -252,27 +252,28 @@ module Enops
       !HEROKU_POSTGRES_HOBBY_PLANS.include?(plan)
     end
 
-    def postgresql_addon_detail(addon)
+    def postgresql_addon_detail(addon, maintenance: false)
       addon_id = addon.fetch('id')
       hostname = postgresql_addon_production?(addon) ? 'postgres-api.heroku.com' : 'postgres-starter-api.heroku.com'
 
       path = "/client/v11/databases/#{addon_id}"
+      path += "/maintenance" if maintenance
 
       api_get hostname, path
     end
 
-    def redis_addon_detail(addon)
+    def redis_addon_detail(addon, maintenance: false)
       path = "/redis/v0/databases/#{addon.fetch("name")}"
-
+      path += "/maintenance" if maintenance
       api_get "redis-api.heroku.com", path
     end
 
-    def data_addon_detail(addon)
+    def data_addon_detail(addon, **args)
       case addon.fetch('plan').fetch('name')
       when /^heroku-postgresql:/
-        postgresql_addon_detail(addon)
+        postgresql_addon_detail(addon, **args)
       when /^heroku-redis:/
-        redis_addon_detail(addon)
+        redis_addon_detail(addon, **args)
       else
         raise ArgumentError
       end
