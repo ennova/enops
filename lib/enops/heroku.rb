@@ -100,6 +100,7 @@ module Enops
       release = get_latest_release(app_name)
       unless is_successful_app_release[release]
         release = get_recent_releases(app_name, 10).detect(&is_successful_app_release)
+        release ||= get_recent_releases(app_name, 50).detect(&is_successful_app_release)
       end
 
       release
