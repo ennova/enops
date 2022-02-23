@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import awscli
 import botocore.session
 import botocore.credentials
 import botocore.exceptions
