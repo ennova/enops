@@ -3,6 +3,7 @@ import sys
 import json
 import botocore.session
 import botocore.credentials
+import botocore.exceptions
 
 session = botocore.session.get_session()
 
