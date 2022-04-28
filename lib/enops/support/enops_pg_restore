@@ -98,6 +98,11 @@ if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 
     sed 's/PARTITION BY LIST ([^)]*);/;/' |
     sed 's/\(CREATE INDEX [^ ]* ON \)ONLY /\1/' |
     PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
+elif [ "${PGRESTORE_DB_VERSION%%.*}" -lt 14 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 14 ]; then
+  echo Restoring to older PostgreSQL version...
+  pg_restore --no-acl --no-owner --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS -f- |
+    sed -e 's/\(subtype = text\),/\1/' -e '/multirange_type_name/d' |
+    PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
 else
   echo Restoring...
   pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS
