@@ -56,7 +56,6 @@ else
   DATA_FILE="$URL"
 fi
 
-LIST_FILE="$WORK_DIR/restore.list"
 pg_restore -l "$DATA_FILE" |
   if [ "$REFRESH_VIEWS" -eq 0 ]; then
     grep -v 'MATERIALIZED VIEW DATA'
@@ -69,7 +68,19 @@ pg_restore -l "$DATA_FILE" |
     cat
   fi |
   egrep -v '; 0 0 (ACL|DATABASE PROPERTIES|COMMENT - EXTENSION) ' |
-  cat > "$LIST_FILE"
+  csplit -s -f "$WORK_DIR/list_" - '/ TABLE DATA /'
+
+if [[ ! -f "$WORK_DIR/list_00" ]] || [[ ! -f "$WORK_DIR/list_01" ]] || [ -f "$WORK_DIR/list_02" ]; then
+  echo Error parsing restore list. >&2
+  exit 1
+fi
+
+grep ' TABLE DATA ' < "$WORK_DIR/list_01" > "$WORK_DIR/list_01_data"
+grep -v ' TABLE DATA ' < "$WORK_DIR/list_01" > "$WORK_DIR/list_01_no_data"
+
+LIST_FILE_PRE="$WORK_DIR/list_00"
+LIST_FILE_DATA="$WORK_DIR/list_01_data"
+LIST_FILE_POST="$WORK_DIR/list_01_no_data"
 
 echo Resetting...
 if [ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 "$DATABASE_URL" -c "select current_setting('is_superuser')")" == on ]; then
@@ -84,8 +95,8 @@ fi
 echo Checking versions...
 PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
 PGRESTORE_DB_VERSION="$(psql -XtAq "$DATABASE_URL" -c "SHOW server_version;")"
-PGDUMP_VERSION="$(grep 'pg_dump version:' "$LIST_FILE" | sed 's/^.*: //')"
-PGDUMP_DB_VERSION="$(grep 'database version:' "$LIST_FILE" | sed -e 's/^.*: //' -e 's/ (.*)$//')"
+PGDUMP_VERSION="$(grep 'pg_dump version:' "$LIST_FILE_PRE" | sed 's/^.*: //')"
+PGDUMP_DB_VERSION="$(grep 'database version:' "$LIST_FILE_PRE" | sed -e 's/^.*: //' -e 's/ (.*)$//')"
 
 if [ "${PGRESTORE_VERSION%%.*}" -gt 10 ] && [ "${PGDUMP_VERSION%%.*}" -lt 10 ]; then
   PGRESTORE_OPTIONS="--if-exists --clean -j 1"
@@ -93,22 +104,42 @@ else
   PGRESTORE_OPTIONS=
 fi
 
-if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 12 ]; then
-  echo Restoring to older PostgreSQL version...
-  pg_restore --no-acl --no-owner --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS -f- |
-    grep -vxF 'SET default_table_access_method = heap;' |
-    sed 's/ FOR EACH ROW EXECUTE FUNCTION / FOR EACH ROW EXECUTE PROCEDURE /' |
-    sed 's/PARTITION BY LIST ([^)]*);/;/' |
-    sed 's/\(CREATE INDEX [^ ]* ON \)ONLY /\1/' |
-    PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
-elif [ "${PGRESTORE_DB_VERSION%%.*}" -lt 14 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 14 ]; then
-  echo Restoring to older PostgreSQL version...
-  pg_restore --no-acl --no-owner --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS -f- |
-    sed -e 's/\(subtype = text\),/\1/' -e '/multirange_type_name/d' |
-    PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
-else
-  echo Restoring...
-  pg_restore --jobs=4 --no-acl --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS
-fi
+patch_schema() {
+  if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 12 ]; then
+    cat
+      grep -vxF 'SET default_table_access_method = heap;' |
+      sed 's/ FOR EACH ROW EXECUTE FUNCTION / FOR EACH ROW EXECUTE PROCEDURE /' |
+      sed 's/PARTITION BY LIST ([^)]*);/;/' |
+      sed 's/\(CREATE INDEX [^ ]* ON \)ONLY /\1/'
+  elif [ "${PGRESTORE_DB_VERSION%%.*}" -lt 14 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 14 ]; then
+    cat
+      sed -e 's/\(subtype = text\),/\1/' -e '/multirange_type_name/d'
+  else
+    cat
+  fi
+}
+
+get_schema() {
+  local LIST_FILE="$1"
+  pg_restore --no-acl --no-owner --exit-on-error -L "$LIST_FILE" "$DATA_FILE" $PGRESTORE_OPTIONS -f-
+}
+
+restore_schema() {
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
+}
+
+restore_data() {
+  local LIST_FILE="$1"
+  pg_restore --data-only --jobs=4 --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
+}
+
+echo "Creating tables..."
+get_schema "$LIST_FILE_PRE" | patch_schema | restore_schema
+
+echo "Restoring data..."
+restore_data "$LIST_FILE_DATA"
+
+echo "Creating indexes and constraints..."
+get_schema "$LIST_FILE_POST" | patch_schema | restore_schema
 
 echo Done.
