@@ -121,7 +121,7 @@ patch_schema() {
   fi |
     grep -v '^CREATE SCHEMA heroku_ext;$' |
     perl -pe "s/^(CREATE EXTENSION .+ WITH SCHEMA )(?:public|heroku_ext);$/\1$EXTENSION_SCHEMA;/" |
-    perl -pe 's/(?:public|heroku_ext)\.(hstore|gin_trgm_ops|earth|cube|<@|@>)/'"$EXTENSION_SCHEMA"'.\1/g'
+    perl -pe 's/(?:public|heroku_ext)\.(hstore|gin_trgm_ops|_int_union|earth|cube|<@|@>)/'"$EXTENSION_SCHEMA"'.\1/g'
 }
 
 get_schema() {
