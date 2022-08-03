@@ -44,8 +44,11 @@ if [ -z "$URL" ]; then
   _usage
 fi
 
+WORK_DIR="$(mktemp -d -t enops_pg_restore.XXXXXX)"
+trap '{ rm -rf "$WORK_DIR"; }' EXIT
+
 if echo "$URL" | grep -q ://; then
-  TEMP_DATA_FILE="$(mktemp -t enops-restore-data.XXXXXX)"
+  TEMP_DATA_FILE="$WORK_DIR/data.dump"
   wget -O "$TEMP_DATA_FILE" "$URL"
   DATA_FILE="$TEMP_DATA_FILE"
 else
@@ -53,7 +56,7 @@ else
   DATA_FILE="$URL"
 fi
 
-LIST_FILE="$(mktemp -t enops-restore-list.XXXXXX)"
+LIST_FILE="$WORK_DIR/restore.list"
 pg_restore -l "$DATA_FILE" |
   if [ "$REFRESH_VIEWS" -eq 0 ]; then
     grep -v 'MATERIALIZED VIEW DATA'
@@ -109,4 +112,3 @@ else
 fi
 
 echo Done.
-rm -f "$TEMP_DATA_FILE" "$LIST_FILE"
