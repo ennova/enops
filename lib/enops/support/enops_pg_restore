@@ -116,7 +116,8 @@ patch_schema() {
       sed -e 's/\(subtype = text\),/\1/' -e '/multirange_type_name/d'
   else
     cat
-  fi
+  fi |
+    grep -v '^CREATE SCHEMA heroku_ext;$'
 }
 
 get_schema() {
