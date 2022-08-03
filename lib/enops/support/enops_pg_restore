@@ -104,6 +104,8 @@ else
   PGRESTORE_OPTIONS=
 fi
 
+EXTENSION_SCHEMA="$(psql -XtAq "$DATABASE_URL" -c "SELECT CASE WHEN EXISTS (SELECT NULL FROM information_schema.schemata WHERE catalog_name = current_database() AND schema_name = 'heroku_ext') THEN 'heroku_ext' ELSE 'public' END;")"
+
 patch_schema() {
   if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 12 ]; then
     cat
@@ -117,7 +119,9 @@ patch_schema() {
   else
     cat
   fi |
-    grep -v '^CREATE SCHEMA heroku_ext;$'
+    grep -v '^CREATE SCHEMA heroku_ext;$' |
+    perl -pe "s/^(CREATE EXTENSION .+ WITH SCHEMA )(?:public|heroku_ext);$/\1$EXTENSION_SCHEMA;/" |
+    perl -pe 's/(?:public|heroku_ext)\.(hstore|gin_trgm_ops|earth|cube|<@|@>)/'"$EXTENSION_SCHEMA"'.\1/g'
 }
 
 get_schema() {
