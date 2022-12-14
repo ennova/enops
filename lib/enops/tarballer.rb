@@ -1,5 +1,6 @@
 require 'enops/utils'
 require 'rubygems/package'
+require 'stringio'
 require 'zlib'
 
 module Enops
