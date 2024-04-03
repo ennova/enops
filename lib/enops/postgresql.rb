@@ -8,7 +8,7 @@ module Enops
       File.dirname(__FILE__) + '/support/enops_pg_restore'
     end
 
-    def wait_for_connections_to_close(database_url)
+    def wait_for_connections_to_close(database_url, tries: 10, sleep: 5)
       sql = <<-SQL.gsub(/\s+/, ' ').strip
         SELECT pid, application_name
         FROM pg_stat_activity
@@ -26,7 +26,7 @@ module Enops
 
       conn = PG.connect(database_url, connect_timeout: 10)
 
-      Retryable.retryable tries: 10, sleep: 5, on: Timeout::Error do
+      Retryable.retryable tries: tries, sleep: sleep, on: Timeout::Error do
         logger.debug "Checking database connections..."
         result = conn.exec(sql)
 
