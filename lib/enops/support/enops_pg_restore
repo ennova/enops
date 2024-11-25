@@ -83,14 +83,9 @@ LIST_FILE_DATA="$WORK_DIR/list_01_data"
 LIST_FILE_POST="$WORK_DIR/list_01_no_data"
 
 echo Resetting...
-if [ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 "$DATABASE_URL" -c "select current_setting('is_superuser')")" == on ]; then
-  DATABASE_NAME="$(basename "$DATABASE_URL")"
-  dropdb --if-exists "$DATABASE_NAME"
-  createdb "$DATABASE_NAME"
-else
-  PGUSER="$(echo "${DATABASE_URL}" | ruby -ruri -e 'puts URI.parse(STDIN.read.chomp).user')"
-  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 "${DATABASE_URL}" -c "DROP OWNED BY ${PGUSER} CASCADE; CREATE SCHEMA public;"
-fi
+DATABASE_NAME="$(basename "$DATABASE_URL" | sed 's/?.*//')"
+dropdb --if-exists --force "$DATABASE_NAME"
+createdb "$DATABASE_NAME"
 
 echo Checking versions...
 PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
