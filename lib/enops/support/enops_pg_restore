@@ -47,6 +47,30 @@ fi
 WORK_DIR="$(mktemp -d -t enops_pg_restore.XXXXXX)"
 trap '{ rm -rf "$WORK_DIR"; }' EXIT
 
+__pg_url_env() {
+  ruby -ruri -rcgi -rshellwords - <<RUBY "$@"
+  fail ArgumentError unless ARGV.size == 1
+  uri = URI.parse(ARGV.first)
+  fail ArgumentError, "invalid URL: #{uri}" unless %w[postgresql postgres].include?(uri.scheme)
+
+  %i[host port user password database].each do |key|
+    value = case key
+    when :database
+      File.basename(CGI.unescape(uri.path))
+    else
+      uri.public_send(key)
+    end
+
+    if value
+      puts "PG#{key.upcase}=#{Shellwords.escape value}"
+    end
+  end
+RUBY
+}
+
+pg_env="$(__pg_url_env "$DATABASE_URL")"
+eval "$(echo "$pg_env" | sed 's/^/export /')"
+
 if echo "$URL" | grep -q ://; then
   TEMP_DATA_FILE="$WORK_DIR/data.dump"
   wget -O "$TEMP_DATA_FILE" "$URL"
