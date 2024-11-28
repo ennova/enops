@@ -153,7 +153,7 @@ restore_schema() {
 
 restore_data() {
   local LIST_FILE="$1"
-  pg_restore --data-only --jobs=4 --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
+  pg_restore --data-only --jobs=4 --no-owner --dbname "$PGDATABASE" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
 }
 
 echo "Creating tables..."
