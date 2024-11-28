@@ -107,9 +107,8 @@ LIST_FILE_DATA="$WORK_DIR/list_01_data"
 LIST_FILE_POST="$WORK_DIR/list_01_no_data"
 
 echo Resetting...
-DATABASE_NAME="$(basename "$DATABASE_URL" | sed 's/?.*//')"
-dropdb --if-exists --force "$DATABASE_NAME"
-createdb "$DATABASE_NAME"
+dropdb --if-exists --force "$PGDATABASE"
+createdb "$PGDATABASE"
 
 echo Checking versions...
 PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
