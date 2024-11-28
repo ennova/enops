@@ -107,8 +107,12 @@ LIST_FILE_DATA="$WORK_DIR/list_01_data"
 LIST_FILE_POST="$WORK_DIR/list_01_no_data"
 
 echo Resetting...
-dropdb --if-exists --force "$PGDATABASE"
-createdb "$PGDATABASE"
+if [[ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 -c "SELECT rolcreatedb FROM pg_roles WHERE rolname = current_user")" == "t" ]]; then
+  dropdb --if-exists --force "$PGDATABASE"
+  createdb "$PGDATABASE"
+else
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+fi
 
 echo Checking versions...
 PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
