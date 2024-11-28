@@ -47,6 +47,30 @@ fi
 WORK_DIR="$(mktemp -d -t enops_pg_restore.XXXXXX)"
 trap '{ rm -rf "$WORK_DIR"; }' EXIT
 
+__pg_url_env() {
+  ruby -ruri -rcgi -rshellwords - <<RUBY "$@"
+  fail ArgumentError unless ARGV.size == 1
+  uri = URI.parse(ARGV.first)
+  fail ArgumentError, "invalid URL: #{uri}" unless %w[postgresql postgres].include?(uri.scheme)
+
+  %i[host port user password database].each do |key|
+    value = case key
+    when :database
+      File.basename(CGI.unescape(uri.path))
+    else
+      uri.public_send(key)
+    end
+
+    if value
+      puts "PG#{key.upcase}=#{Shellwords.escape value}"
+    end
+  end
+RUBY
+}
+
+pg_env="$(__pg_url_env "$DATABASE_URL")"
+eval "$(echo "$pg_env" | sed 's/^/export /')"
+
 if echo "$URL" | grep -q ://; then
   TEMP_DATA_FILE="$WORK_DIR/data.dump"
   wget -O "$TEMP_DATA_FILE" "$URL"
@@ -83,13 +107,16 @@ LIST_FILE_DATA="$WORK_DIR/list_01_data"
 LIST_FILE_POST="$WORK_DIR/list_01_no_data"
 
 echo Resetting...
-DATABASE_NAME="$(basename "$DATABASE_URL" | sed 's/?.*//')"
-dropdb --if-exists --force "$DATABASE_NAME"
-createdb "$DATABASE_NAME"
+if [[ "$(PGOPTIONS="--client-min-messages=warning" psql -XtAq -v ON_ERROR_STOP=1 -c "SELECT rolcreatedb FROM pg_roles WHERE rolname = current_user")" == "t" ]]; then
+  dropdb --if-exists --force "$PGDATABASE"
+  createdb "$PGDATABASE"
+else
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+fi
 
 echo Checking versions...
 PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
-PGRESTORE_DB_VERSION="$(psql -XtAq "$DATABASE_URL" -c "SHOW server_version;")"
+PGRESTORE_DB_VERSION="$(psql -XtAq -c "SHOW server_version;")"
 PGDUMP_VERSION="$(grep 'pg_dump version:' "$LIST_FILE_PRE" | sed 's/^.*: //')"
 PGDUMP_DB_VERSION="$(grep 'database version:' "$LIST_FILE_PRE" | sed -e 's/^.*: //' -e 's/ (.*)$//')"
 
@@ -99,7 +126,7 @@ else
   PGRESTORE_OPTIONS=
 fi
 
-EXTENSION_SCHEMA="$(psql -XtAq "$DATABASE_URL" -c "SELECT CASE WHEN EXISTS (SELECT NULL FROM information_schema.schemata WHERE catalog_name = current_database() AND schema_name = 'heroku_ext') THEN 'heroku_ext' ELSE 'public' END;")"
+EXTENSION_SCHEMA="$(psql -XtAq -c "SELECT CASE WHEN EXISTS (SELECT NULL FROM information_schema.schemata WHERE catalog_name = current_database() AND schema_name = 'heroku_ext') THEN 'heroku_ext' ELSE 'public' END;")"
 
 patch_schema() {
   if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 12 ]; then
@@ -125,12 +152,12 @@ get_schema() {
 }
 
 restore_schema() {
-  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null
 }
 
 restore_data() {
   local LIST_FILE="$1"
-  pg_restore --data-only --jobs=4 --no-owner --dbname "${DATABASE_URL}" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
+  pg_restore --data-only --jobs=4 --no-owner --dbname "$PGDATABASE" --exit-on-error -L "$LIST_FILE" "$DATA_FILE"
 }
 
 echo "Creating tables..."
