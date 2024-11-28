@@ -113,7 +113,7 @@ createdb "$DATABASE_NAME"
 
 echo Checking versions...
 PGRESTORE_VERSION="$(pg_restore --version | sed 's/.*) //')"
-PGRESTORE_DB_VERSION="$(psql -XtAq "$DATABASE_URL" -c "SHOW server_version;")"
+PGRESTORE_DB_VERSION="$(psql -XtAq -c "SHOW server_version;")"
 PGDUMP_VERSION="$(grep 'pg_dump version:' "$LIST_FILE_PRE" | sed 's/^.*: //')"
 PGDUMP_DB_VERSION="$(grep 'database version:' "$LIST_FILE_PRE" | sed -e 's/^.*: //' -e 's/ (.*)$//')"
 
@@ -123,7 +123,7 @@ else
   PGRESTORE_OPTIONS=
 fi
 
-EXTENSION_SCHEMA="$(psql -XtAq "$DATABASE_URL" -c "SELECT CASE WHEN EXISTS (SELECT NULL FROM information_schema.schemata WHERE catalog_name = current_database() AND schema_name = 'heroku_ext') THEN 'heroku_ext' ELSE 'public' END;")"
+EXTENSION_SCHEMA="$(psql -XtAq -c "SELECT CASE WHEN EXISTS (SELECT NULL FROM information_schema.schemata WHERE catalog_name = current_database() AND schema_name = 'heroku_ext') THEN 'heroku_ext' ELSE 'public' END;")"
 
 patch_schema() {
   if [ "${PGRESTORE_DB_VERSION%%.*}" -lt 12 ] && [ "${PGDUMP_DB_VERSION%%.*}" -ge 12 ]; then
@@ -149,7 +149,7 @@ get_schema() {
 }
 
 restore_schema() {
-  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null "${DATABASE_URL}"
+  PGOPTIONS='--client-min-messages=warning' psql -X -q -v ON_ERROR_STOP=1 -o /dev/null
 }
 
 restore_data() {
