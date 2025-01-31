@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'netrc'
   spec.add_dependency 'heroics', '~> 0.1.2'
   spec.add_dependency 'retryable', '~> 2.0'
-  spec.add_dependency 'activesupport', '>= 4.0', '< 8.0'
+  spec.add_dependency 'activesupport', '>= 4.0', '< 8.1'
   spec.add_dependency 'aws-sdk-s3', '~> 1.17'
   spec.add_dependency 'aws-sdk-cloudwatch', '~> 1.22'
   spec.add_dependency 'climate_control', '~> 0.2.0'
